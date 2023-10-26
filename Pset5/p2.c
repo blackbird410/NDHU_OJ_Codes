@@ -22,7 +22,7 @@ int main()
 		}
 
 		// Sort each array and return the number of swapp
-		printf("Optimal train swapping take %d swaps.\n", sort(arr, p));
+		printf("Optimal train swapping takes %d swaps.\n", sort(arr, p));
 	}
 
 	return 0;
