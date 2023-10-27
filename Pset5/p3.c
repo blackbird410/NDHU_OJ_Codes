@@ -1,7 +1,6 @@
 #include <stdio.h>
-#include <stdlib.h>
 
-#define ASCII_SIZE 64
+#define ASCII_SIZE 95
 
 void sort(int *freq, int *record, int counter);
 
@@ -9,14 +8,6 @@ int main()
 {
 	int freq[ASCII_SIZE], record[ASCII_SIZE], i = 0, counter = 0, end = 0;
 	char c = 0;
-
-	// Try with an input file
-	FILE *file = NULL;
-	file = fopen("sample.txt", "r");
-	if (file == NULL)
-	{
-		printf("File could not be opened.\n");
-	}
 
 	// Read each line as an input until end of file
 	while(!end)
@@ -30,13 +21,14 @@ int main()
 		// Read each character in the line and update the their frequency
 		while(1)
 		{
-			// scanf("%c", &c);
-			c = getc(file);
+          		c = 0;
+			scanf("%c", &c);
+
 			// Check for line breaks or new line
 			if (c == '\n' || c == '\r')
 				break;
 	          	// Check for end of file
-			if (c < ' ' || c > '^')
+			if (!c)
 			{
 				end = 1;
 				break;

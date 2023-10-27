@@ -1,2 +1,4 @@
 AAABBC
 122333
+this is a sample text file for testing the code.
+Roses are red, the sky is blue, the blushes are green and the sun like you
