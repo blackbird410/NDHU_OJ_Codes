@@ -17,13 +17,14 @@ int minAbsDev(int *arr, int n, int a);
 int main()
 {
 	int arr[SIZE] = {0};
-	int n = 0, i = 0, temp = 0, counter = 0, median = 0, mean = 0, minDev = 0, minValue = 0, pVal = 0, min = 0;
+	int n = 0, i = 0, temp = 0, counter = 0, median = 0, mean = 0, min = 0, minDev = 0, minValue = 0, pVal = 0, started = 0;
 	float sum = 0, t = 0;
 
 	// Take a block of input until the end of file 
 	while(1)
 	{
 		n = 0;
+      	
 		// Take the N value
 		scanf("%d", &n);
 
@@ -31,7 +32,7 @@ int main()
 		if (!n)
 		       break;
 			
-		// Take the X numbers into the array 
+		// Take the N numbers into the array 
 		sum = 0;
 		for (i = 0; i < n; i++)
 		{
@@ -43,12 +44,14 @@ int main()
 		sort(arr, n);
 
 		// Find the median 
-		median = arr[(n / 2)- 1];
+		median = (n % 2) ? arr[((n + 1) / 2) - 1] : arr[(n / 2) - 1];
+		// printf("Median: %d\n", median);
 		minValue = median;
 
 		// Find the mean
 		t = sum / n;
 		mean = round(t);
+		// printf("Mean: %d\n", mean);
 
 		// Compute the summation of minimum absolute deviation
 		if (mean != median)
