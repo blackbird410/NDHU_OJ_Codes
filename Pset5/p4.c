@@ -12,9 +12,6 @@ int main ()
 
     while(scanf("%d", &n) != EOF)
     {
-        // if(!n)
-        //     break;
-        
         for (i = 0; i < n; i++)
             scanf("%d", &arr[i]);
 
