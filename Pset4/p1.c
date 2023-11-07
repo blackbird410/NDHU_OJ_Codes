@@ -20,11 +20,6 @@ int main()
 	for (i = 0; i < n; i++)
 	{
 		scanf("%d", &arr[i]);
-	}
-
-	// Compute the sum of all values
-	for (i = 0; i < n; i++)
-	{
 		sum += arr[i];
 	}
 
