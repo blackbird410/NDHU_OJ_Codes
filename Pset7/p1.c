@@ -5,7 +5,7 @@ unsigned long maxCycle(unsigned long n);
 int main()
 {
     // Set a max variable for max cycle
-    unsigned long max_cycle = 0, i = 0, j = 0, k = 0, cycle = 1;
+    unsigned long max_cycle = 0, i = 0, j = 0, k = 0, cycle = 0;
 
     while(scanf("%ld %ld", &i, &j) == 2)
     {
