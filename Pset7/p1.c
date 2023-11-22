@@ -1,37 +1,42 @@
 #include <stdio.h>
 
-int maxCycle(int n);
+unsigned long maxCycle(unsigned long n);
 
 int main()
 {
     // Set a max variable for max cycle
-    int max_cycle = 0, i = 0, j = 0, k = 0, cycle = 0;
+    unsigned long max_cycle = 0, i = 0, j = 0, k = 0, cycle = 1;
 
-    while(1)
+    while(scanf("%ld %ld", &i, &j) == 2)
     {
-        i = 0, j = 0, max_cycle = 0;
-        scanf("%d %d", &i, &j);
-        if (!i || !j)
-            break;
-        printf("\n");
+        printf("%ld %ld", i, j);
+
+        //  Swap the numbers if i > j
+        if (i > j)
+        {
+            i += j;
+            j = i - j;
+            i -= j;
+        }
+        
+        max_cycle = 0;
 
         // Compute max-cycle for all numbers between i and j
-        for (k = i; k < j; k++)
+        for (k = i; k <= j; k++)
         {
             // Update the max when the current cycle-length > max-cycle
             cycle = maxCycle(k);
-            if (cycle > max_cycle)
-                max_cycle = cycle;
+            max_cycle = (cycle > max_cycle) ? cycle : max_cycle;
         }
         
-        // Output : i, j max-cycle
-        printf("%d %d %d", i, j, max_cycle);
+        // Output max-cycle
+        printf(" %ld\n", max_cycle);
     }
 
     return 0;
 }
 
-int maxCycle(int n)
+unsigned long maxCycle(unsigned long n)
 {
     // Apply the algorithm to return the maximum cycle for a number n
     // What is the maximum_cycle ?
@@ -39,6 +44,8 @@ int maxCycle(int n)
 
     // printf("%d ", n);
 
+    // Recursive method
+    // -------------------
     if (n == 1)
     {
         // Base case
@@ -46,10 +53,33 @@ int maxCycle(int n)
     }
     else if (n % 2)
     {
-        return maxCycle(3*n + 1) + 1;
+        return maxCycle((3*n) + 1) + 1;
     }
     else 
     {
-        return maxCycle(n/2) + 1;
+        return maxCycle(n / 2) + 1;
     }
+
+    // Iterative method
+    // -----------------
+    // int cycle = 0;
+    // do 
+    // {
+    //     if (n == 1)
+    //     {
+    //         break;
+    //     }
+    //     else if (n % 2)
+    //     {
+    //         n = 3 * n + 1;
+    //     }
+    //     else
+    //     {
+    //         n /= 2;
+    //     }
+    //     cycle++;
+    
+    // }while (n > 0);
+
+    // return cycle;
 }
