@@ -1,83 +1,90 @@
 #include <stdio.h>
 
 #define SIZE 100
+
 void initArray(int *arr, int n);
-int getLuckyNumber(int *arr, int n, int k);
-int isNotEnd(int *arr, int n);
-int getNumber(int *arr, int n);
+int getSurvivor(int *arr, int n, int k, int i);
+void printArray(int *arr, int n);
 
 int main()
 {
-    int i = 0, n = 0, k = 1;
-    int arr[SIZE];
+	// The goal is not to find the survivor, but to find the position counting should start so YOU (1) can survive
+	// Find k such that 1 is the survivor
 
-    initArray(arr, n);
-
-    while(scanf("%d %d", &n, &k) == 2 && (n  || k))
-    {
-        printf("%d\n", getLuckyNumber(arr, n, k));
-    }
-
-    return 0;
+	int n = 0, k = 1, i = 0, arr[SIZE];
+	
+	while(scanf("%d %d", &n, &k) == 2 && (n  || k))
+	{
+		initArray(arr, n);
+		while(getSurvivor(arr, n, k, i) != 1 && i < n)
+		{
+			initArray(arr, n);
+			i++;
+		}
+		printf("%d\n", i+1);
+	}
+	
+	return 0;
 }
 
 void initArray(int *arr, int n)
 {
-    int i = 0;
-    for (i = 0; i < n; i++)
-        arr[i] = i + 1;
+	int i = 0;
+	for (i = 0; i < n; i++)
+		arr[i] = i + 1;
 }
 
-int getLuckyNumber(int *arr, int n, int k)
+void shift(int *arr, int n, int k)
 {
-    int p = 0, i = 0;
+	int i = 0;
 
-    while(isNotEnd(arr, n))
-    {
-        if (p == n)
-            p = 0;
-        // We start counting from k the person to be person killed
-        for (i = 0; i < n; i++)
-        {
-            // TODO: Continue here
-            if (arr[i] > 0)
-            {
-                p++;
+	for (i = k; i < n-1; i++)
+		arr[i] = arr[i+1];
+}
 
-            }
-        }
-        // When we find the one to kill, we set its value to -1
-    }
+int getSurvivor(int *arr, int n, int k, int i)
+{
+	int dead = 0;
 
-    return getNumber(arr, n);
+	if (n == 1)
+		return arr[0];
+	
+	printArray(arr, n);
+
+	i = i + k - 1;
+	if (i >= n)
+		i = (i % n);
+
+	dead = i;
+	i = i + k;
+	if (i >= n)
+		i = (i % n);
+
+	arr[dead] = arr[i];
+
+	if (i < n - 1)
+		shift(arr, n, i);
+	n--;
+
+	// TODO: Ensure that the starting position is always to the left of the dead
+	if (n <= k)
+		i = dead;
+	else if(dead == 0)
+		i = 1;
+	else if (dead == n)
+		i = 0;
+	else
+		i = dead + 1; 
+
+	return getSurvivor(arr, n, k, i);
 
 }
 
-int isNotEnd(int *arr, int n)
+void printArray(int *arr, int n)
 {
-    int count = 0, i;
-
-    for(i = 0; i < n; i++)
-    {
-        if (count >= 2)
-            return 1;
-        if (arr[i] > 0)
-            count++;
-    }
-
-    return 0;
-
-}
-
-int getNumber(int *arr, int n)
-{
-    int i = 0;
-    
-    for (i = 0; i < n; i++)
-    {
-        if (arr[i] > 0)
-            return arr[i];
-    }
-
-    return 0;
+	int i = 0;
+	printf("Array:");
+	for (i = 0; i < n; i++)
+		printf(" %d", arr[i]);
+	printf("\n");
 }
