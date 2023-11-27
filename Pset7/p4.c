@@ -16,6 +16,7 @@ int main()
 	while(scanf("%d %d", &n, &k) == 2 && (n  || k))
 	{
 		initArray(arr, n);
+		i = 0;
 		while(getSurvivor(arr, n, k, i) != 1 && i < n)
 		{
 			initArray(arr, n);
@@ -67,14 +68,7 @@ int getSurvivor(int *arr, int n, int k, int i)
 	n--;
 
 	// TODO: Ensure that the starting position is always to the left of the dead
-	if (n <= k)
-		i = dead;
-	else if(dead == 0)
-		i = 1;
-	else if (dead == n)
-		i = 0;
-	else
-		i = dead + 1; 
+	i = (i > dead) ? dead + 1: dead; 
 
 	return getSurvivor(arr, n, k, i);
 
