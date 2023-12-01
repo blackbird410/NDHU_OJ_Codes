@@ -1,31 +1,25 @@
 #include <stdio.h>
 
-#define SIZE 100
+#define SIZE 101
 
 void initArray(int *arr, int n);
-int getSurvivor(int *arr, int n, int k, int i);
-void printArray(int *arr, int n);
+int getSurvivor(int *arr, int n, int k);
 
-int main()
+int main() 
 {
-	// The goal is not to find the survivor, but to find the position counting should start so YOU (1) can survive
-	// Find k such that 1 is the survivor
+    int n, k, i = 0, arr[SIZE];
 
-	int n = 0, k = 1, i = 0, arr[SIZE];
-	
-	while(scanf("%d %d", &n, &k) == 2 && (n  || k))
-	{
-		initArray(arr, n);
-		i = 0;
-		while(getSurvivor(arr, n, k, i) != 1 && i < n)
-		{
-			initArray(arr, n);
-			i++;
-		}
-		printf("%d\n", i+1);
-	}
-	
-	return 0;
+    while (scanf("%d %d", &n, &k) == 2 && n && k) 
+    {
+        initArray(arr, n);
+
+        i = getSurvivor(arr, n, k);
+        i = (i == 1) ? i : n + 2 - i;
+
+        printf("%d\n", i);
+    }
+
+    return 0;
 }
 
 void initArray(int *arr, int n)
@@ -35,50 +29,46 @@ void initArray(int *arr, int n)
 		arr[i] = i + 1;
 }
 
-void shift(int *arr, int n, int k)
+
+int getSurvivor(int *arr, int n, int k)
 {
-	int i = 0;
+    int dead = 0, pos = 0, counter, total = n;
 
-	for (i = k; i < n-1; i++)
-		arr[i] = arr[i+1];
-}
+    while(total > 1)
+    {
+        counter = 0;
 
-int getSurvivor(int *arr, int n, int k, int i)
-{
-	int dead = 0;
+        while(1)
+        {
+            if (arr[pos])
+                counter++;
+            if (counter == k)
+                break;
+            
+            pos = (pos + 1) % n;
+        }
 
-	if (n == 1)
-		return arr[0];
-	
-	printArray(arr, n);
+        dead = pos;
+        arr[dead] = 0;
+        total--;
 
-	i = i + k - 1;
-	if (i >= n)
-		i = (i % n);
+        counter = 0;
+        pos = (pos + 1) % n; 
+        while (1)
+        {
+            if (arr[pos])
+                counter++;
+            if (counter == k)
+                break;
+            
+            pos = (pos + 1) % n;
+        }
 
-	dead = i;
-	i = i + k;
-	if (i >= n)
-		i = (i % n);
+        arr[dead] = arr[pos];
+        arr[pos] = 0;
 
-	arr[dead] = arr[i];
+        pos = (dead + 1) % n;
+    }
 
-	if (i < n - 1)
-		shift(arr, n, i);
-	n--;
-
-	// TODO: Ensure that the starting position is always to the left of the dead
-	i = (i > dead) ? dead + 1: dead; 
-
-	return getSurvivor(arr, n, k, i);
-
-}
-
-void printArray(int *arr, int n)
-{
-	int i = 0;
-	printf("Array:");
-	for (i = 0; i < n; i++)
-		printf(" %d", arr[i]);
-	printf("\n");
+    return arr[dead];
 }
