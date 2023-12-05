@@ -109,7 +109,7 @@ int getCommand(char *str, int *a, int *b)
 
 void findPos(int (*arr)[SIZE], int n, int a, int b, int (*pos)[2])
 {
-	int i, j;
+	int i, j, found = 0;
 
 	for (i = 0; i < n; i++)
 	{
@@ -119,13 +119,20 @@ void findPos(int (*arr)[SIZE], int n, int a, int b, int (*pos)[2])
 			{
 				pos[POS_A][ROW] = i;
 				pos[POS_A][COL] = j;
+				found++;
 			}
 			else if (arr[i][j] == b)
 			{
 				pos[POS_B][ROW] = i;
 				pos[POS_B][COL] = j;
+				found++;
 			}
+			
+			if (found == 2)
+				break;
 		}
+		if (found == 2)
+			break;
 	}
 }
 
