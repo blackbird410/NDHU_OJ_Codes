@@ -1,17 +1,19 @@
+
 #define ROW1 0
 #define COL1 4
 #define ROW2 4
 #define COL2 3
+#define ROWS 9
+#define COLS 7
 
 int main() 
 {
-    int *p = NULL;
-    init(&p);
-    
-    int v1 = *((int *)(p + ((ROW1 + COL1) * sizeof(int))));
-    int v2 = *((int *)(p + ((ROW2 + COL2) * sizeof(int))));
-    printf("%d, %d", v1, v2);
+    int *p;
+    init(&p);    
+  	int value1 = *(p + ROW1 * COLS + COL1);
+    int value2 = *(p + ROW2 * COLS + COL2);
 
-    free(p);
+    printf("%d, %d", value1, value2);
+    
     return 0;
 }
