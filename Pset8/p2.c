@@ -64,6 +64,8 @@ int solveMaze(Maze *maze)
 	while(flag)
 	{
 		flag = 0;
+		if (maze->board[n - 1][n - 1] == MARKED)
+            return YES;
 		for (i = 0; i < n; i++)
 		{
 			for (j = 0; j < n; j++)
