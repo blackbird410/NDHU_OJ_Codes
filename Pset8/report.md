@@ -77,12 +77,7 @@ In this problem you can either create an array of 5 columns or as I did, create 
 Gomoku, also called Five in a Row, is an abstract strategy board game. It is traditionally played with black and white stones on a 19×19 board. The winner is the first player to form an unbroken chain of five stones horizontally, vertically, or diagonally. Please write a program to determine if there is a winner or not.
 
 ### Solution provided
-The valid inputs of this game are going to be converted into integer values for processing as specified below:
-* '_' (underscore) : NO_STONE (like a blank on paper and stored as -1 in memory)
-* 'O' : WHITE (stored as 0 in memory)
-* 'X' : BLACK (stored as 1 in  memory)
-
-* Take the inputs and store them as specified in memory.
+* Take the inputs and store them in a 2D array of characters.
 	- Take the inputs line by line
 	- **After taking the inputs with fgets, DO NOT FORGET to empty the buffer  in order to take a new line properly in memory.**
 * To find if there is a winner or not you will follow this pattern:
