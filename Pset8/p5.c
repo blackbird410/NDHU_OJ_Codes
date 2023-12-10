@@ -3,23 +3,21 @@
 
 #define SIZE 19
 #define SIZE_BOARD SIZE*SIZE
-#define WHITE 0
-#define BLACK 1
-#define NO_WINNER -1
-#define NO_STONE -1
+#define WHITE 'O'
+#define BLACK 'X'
+#define NO_WINNER '_'
+#define NO_STONE '_'
 #define LOWER_BOUND 4
 #define UPPER_BOUND 14
 #define SE 1
 #define SW 2
-#define NE 3
-#define NW 4
 
-void inputGame(int (*game)[SIZE]);
-int getWinner(int (*game)[SIZE]);
+void inputGame(char (*game)[SIZE]);
+char getWinner(char (*game)[SIZE]);
 
 int main()
 {
-	int game[SIZE][SIZE], winner;
+	char game[SIZE][SIZE], winner;
 
 	inputGame(game);
 	winner = getWinner(game);
@@ -40,41 +38,26 @@ int main()
 	return 0;
 }
 
-void inputGame(int (*game)[SIZE])
+void inputGame(char (*game)[SIZE])
 {
 	int i = 0, j = 0, count = 0;;
-	char str[SIZE + 1];
+	char str[SIZE];
 
 	while(i < SIZE)
 	{
-		fgets(str, SIZE + 1, stdin);
+		fgets(str, SIZE, stdin);
 		for(j = 0; j < SIZE; j++)
-		{
-			switch(str[j])
-			{
-				case 'O':
-					game[i][j] = WHITE;
-					break;
-				case 'X':
-					game[i][j] = BLACK;
-					break;
-				case '_':
-					game[i][j] = NO_STONE;
-					break;
-				default:
-					break;
-			}
-			
-		}
+			game[i][j] = str[j];
 		while ((getchar()) != '\n');
 		i++;
 	}
 }
 
 
-int checkHorizontal(int (*game)[SIZE])
+char checkHorizontal(char (*game)[SIZE])
 {
-	int i, j, count, previous;
+	int i, j, count;
+	char previous;
 
 	for (i = 0; i < SIZE; i++)
 	{
@@ -101,9 +84,10 @@ int checkHorizontal(int (*game)[SIZE])
 	return NO_WINNER;
 }
 
-int checkVertical(int (*game)[SIZE])
+char checkVertical(char (*game)[SIZE])
 {
-	int i, j, count, previous;
+	int i, j, count;
+	char previous;
 
 	for (i = 0; i < SIZE; i++)
 	{
@@ -132,7 +116,7 @@ int checkVertical(int (*game)[SIZE])
 
 
 
-int countPieces(int (*game)[SIZE], int i, int j, int d)
+int countPieces(char (*game)[SIZE], int i, int j, int d)
 {
 	int count, k;
 
@@ -157,14 +141,14 @@ int countPieces(int (*game)[SIZE], int i, int j, int d)
 			}
 			break;
 		default:
-			count = NO_WINNER;
+			count = -1;
 			break;
 	}
 
 	return count;
 }
 
-int checkDiagonal(int (*game)[SIZE])
+char checkDiagonal(char (*game)[SIZE])
 {
 	int i, j, k, count;
 	
@@ -194,9 +178,9 @@ int checkDiagonal(int (*game)[SIZE])
 	return NO_WINNER;
 }
 
-int getWinner(int (*game)[SIZE])
+char getWinner(char (*game)[SIZE])
 {
-	int winner;
+	char winner;
 
 	winner = checkHorizontal(game);
 	if (winner != NO_WINNER)
