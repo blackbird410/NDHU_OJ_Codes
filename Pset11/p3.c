@@ -3,42 +3,46 @@
 
 #define SIZE 100000
 
-char *lookAndSay(int n);
+int lookAndSay(int n, char *arr, int *count);
 
 int main()
 {
     int n;
+    char arr[SIZE];
+    int count[SIZE] = {0};
+
     scanf("%d", &n);
+    lookAndSay(n, arr, count);
 
-    char *p = lookAndSay(n);
-
-    printf("%s\n", p);
-    free(p);
+    printf("%s\n", arr);
 
     return 0;
 }
 
-char *lookAndSay(int n)
+int lookAndSay(int n, char *number, int *count)
 {
-    char *arr = malloc(SIZE * sizeof(char));
-    if (arr == NULL)
-        return NULL;
-
     if (n == 1)
     {
-        arr[0] = '1';
-        arr[1] = '\0';
-        return arr;
+        number[0] = '1';
+        number[1] = '\0';
+        return 0;
     }
+
     // Read the number
-    char *number = lookAndSay(n - 1);
+    lookAndSay(n - 1, number, count);
     printf("%s\n", number);
 
-    int i = 0, j = 0;
-    int count[SIZE] = {0};
+    char arr[SIZE];
+    int i = 0, j = 0, k = 0;
+    while (count[i])
+    {
+        count[i] = 0;
+        i++;
+    }
+    i = 0;
 
+    // Recording the frequency
     arr[i] = number[j];
-
     while(number[j] != '\0')
     {
         if (arr[i] != number[j])
@@ -51,8 +55,7 @@ char *lookAndSay(int n)
         j++;
     }
 
-    int k = 0;
-    
+    // Adding the frequency and the number
     j = 0;
     while(k <= i)
     {
@@ -62,18 +65,6 @@ char *lookAndSay(int n)
         k++;
     }
     number[j] = '\0';
-    free(arr);
 
-    return number;
+    return 0;
 }
-
-// 1
-// 11
-// 21
-// 1211
-// 111221
-// 312211
-// 13112221
-// 1113213211
-// 31131211131221
-// 13211311123113112211
