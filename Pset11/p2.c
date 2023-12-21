@@ -11,8 +11,13 @@ notice: The letter you see in the number should be upper case.
 
 char *convertToDifferentBase(int dec, int base, char *result) 
 {
-    int remainder, digit, i = 0;
-    char r[SIZE]; 
+    int remainder, isNegative = 0, i = 0;
+    char r[SIZE];
+
+    if (dec < 0)
+        isNegative = 1;
+    
+    dec = (dec  < 0) ?  -dec : dec;
 
     // Convert the decimal number in the base specified
     while(dec)
@@ -25,9 +30,12 @@ char *convertToDifferentBase(int dec, int base, char *result)
     }
 
     int l = i - 1;
-    for(i = 0; i <= l; i++)
+    if (isNegative)
+        result[0] = '-';
+
+    for(i = isNegative; i <= l + isNegative; i++)
     {
-        result[i] = r[l - i];
+        result[i] = r[l - i + isNegative];
     }
 
     result[i] = '\0';
@@ -37,8 +45,16 @@ char *convertToDifferentBase(int dec, int base, char *result)
 
 int main()
 {
-    int n;
-    char result[SIZE];
+    int n, d;
+    char result[SIZE], *p;
 
-    scanf("%d", &n);
+    p = result;
+
+    while(scanf("%d %d", &n,  &d) == 2 && n && d)
+    {   
+        p = convertToDifferentBase(n, d, p);
+        printf("%s\n", p);
+    }
+    
+    return 0;
 }
