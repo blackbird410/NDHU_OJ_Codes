@@ -29,17 +29,47 @@ char *shiftAdd(char *result, char r)
     return result;
 }
 
+char *reverse(char *result)
+{
+    int l = strlen(result), i = 0;
+
+    while(i < l/2)
+    {
+        result[i] += result[l - i - 1];
+        result[l - i - 1] = result[i] - result[l - i - 1];
+        result[i] -= result[l - i - 1];
+
+        i++;  
+    }
+
+    return result;
+}
+
+int isNum(char c)
+{
+    return (c >= '0' && c <= '9');
+}
+
 char *convertToDifferentBase(int dec, int base, char *result) 
 {
     if (!dec)
+    {
+        reverse(result);
         return result;
+    }
     
     int r = abs(dec % base);
+    int l = (isNum(result[0])) ? strlen(result) : 0;
     r = (r > 9) ? r + '7' : r + '0';
-    shiftAdd(result, (char) r);
+    result[l] = r;
+    result[l + 1] = '\0';
 
     if (dec < 0 && !(dec / base))
+    {
+        reverse(result);
         shiftAdd(result, '-');
+        return result;
+    }
 
     return convertToDifferentBase(dec / base, base, result);
 }
@@ -51,7 +81,6 @@ int main()
 
     while(scanf("%d %d", &dec, &base) == 2 && dec && base)
     {
-        result[0] = '\0';
         convertToDifferentBase(dec, base, result);
         printf("%s\n", result);
     }
