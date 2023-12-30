@@ -1,55 +1,45 @@
 #include <stdio.h>
 
+// Find the number of swaps required to sort an array
+
 #define SIZE 50
-
-int sort(int *arr, int n);
-
-int main()
-{
-	// Take inputs N: number of test cases
-	// Test cases: one integer (p) and one array (arr(p))
-	int arr[SIZE] = {0}, i = 0, j = 0, n = 0, p = 0;
-
-	scanf("%d", &n);
-
-	for(i = 0; i < n; i++)
-	{
-		scanf("%d", &p);
-		// Take the array input
-		for(j = 0; j < p; j++)
-		{
-			scanf("%d", &arr[j]);
-		}
-
-		// Sort each array and return the number of swapp
-		printf("Optimal train swapping takes %d swaps.\n", sort(arr, p));
-	}
-
-	return 0;
-}
 
 int sort(int *arr, int n)
 {
-	// Bubble sort
-	int swapped = 0, i = 0, temp = 0, counter = 0;
-	while(1)
+	int count = 0, swapped = 1, i = 0;
+
+	while(swapped)
 	{
 		swapped = 0;
-		for(i = 0; i < n-1; i++)
+
+		for (i = n-1; i > 0; i--)
 		{
-			if (arr[i] > arr[i+1])
+			if (arr[i - 1] > arr[i])
 			{
-				temp = arr[i];
-				arr[i] = arr[i+1];
-				arr[i+1] = temp;
+				arr[i - 1] += arr[i];
+				arr[i] = arr[i - 1] - arr[i];
+				arr[i - 1] -= arr[i];
 				swapped = 1;
-				counter++;
+				count++;
 			}
 		}
-
-		if (!swapped)
-			break;
 	}
 
-	return counter;
+	return count;
+}
+
+int main()
+{
+	int test_cases = 0, n, i, arr[SIZE] = {0};
+
+	scanf("%d", &test_cases);
+	while(test_cases--)
+	{
+		scanf("%d", &n);
+		for (i = 0; i < n; i++)
+			scanf("%d", &arr[i]);
+		printf("Optimal train swapping takes %d swaps.\n", sort(arr, n));
+	}
+
+	return 0;
 }

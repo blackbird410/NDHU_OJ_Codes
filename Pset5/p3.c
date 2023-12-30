@@ -1,90 +1,91 @@
 #include <stdio.h>
 
-#define ASCII_SIZE 95
+// Given a series of string of characters, display the frequency of each character in the string in ascending order
+// If two characters have the same frequency, the higher ascii value comes first
+// Input ends with EOF
 
-void sort(int *freq, int *record, int counter);
+// For each string of characters:
+// Initialize the frequency table
+// Update the frequency of every valid character found
+// Record and sort the frequencies greater than zero in a record table
+// Display the record values, ascii number first and frequency second
+// If it is not the end of input, print a blank line
+
+#define ASCII 95
+
+typedef struct record 
+{
+	int c;
+	int f;
+} record;
+
+void sort(record *rec, int size);
 
 int main()
 {
-	int freq[ASCII_SIZE], record[ASCII_SIZE], i = 0, counter = 0, end = 0;
-	char c = 0;
+	record rec[ASCII];
+	int freq[ASCII] = {0}, i, j;
+	char c = 'a';
 
-	// Read each line as an input until end of file
-	while(!end)
+	while(c)
 	{
-		// Reinitialize the frequency array for new input
-		for(i = 0; i < ASCII_SIZE; i++)
-		{
+		for (i = 0; i < ASCII; i++)
 			freq[i] = 0;
-		}
 
-		// Read each character in the line and update the their frequency
-		while(1)
+		c = 0;
+		while (scanf("%c", &c) == 1 && c != '\n' && c != '\r')
 		{
-          		c = 0;
-			scanf("%c", &c);
-
-			// Check for line breaks or new line
-			if (c == '\n' || c == '\r')
-				break;
-	          	// Check for end of file
-			if (!c)
-			{
-				end = 1;
-				break;
-			}
-
-			// Update the frequencies
 			freq[c - ' ']++;
+			i++;
 		}
 
-		// Record the different characters in the input to display
-		counter = 0;
-		for(i = 0; i < ASCII_SIZE; i++)
+		j = 0;
+		for (i = 0; i < ASCII; i++)
 		{
-			if(freq[i])
+			if (freq[i])
 			{
-				record[counter] = i + ' ';
-				counter++;
+				rec[j].c = i + ' ';
+				rec[j].f = freq[i];
+				j++;	
 			}
 		}
 
-		// Sort the record in ascending order of the frequencies, if two frequencies are the same, the higher ASCII value precede
-		sort(freq, record, counter);
+		sort(rec, j);
 
-		// Output the record with each ASCI value and frequency on separated line, a blank line separate each sets of output
-		for(i = 0; i < counter; i++)
-		{
-			printf("%d %d\n", record[i], freq[record[i] - ' ']);
-		}
-
-		// Display a blank line if end of file not yet attained
-		if (!end)
+		for (i = 0; i < j; i++)
+			printf("%d %d\n", rec[i].c, rec[i].f);
+		
+		if (c)
 			printf("\n");
 	}
 
 	return 0;
 }
 
-void sort(int *freq, int *record, int counter)
+void swap(record *a, record *b)
 {
-	int i = 0, flag = 1, f1 = 0, f2 =0;
-	char temp;
+	a->c += b->c;
+	b->c = a->c - b->c;
+	a->c -= b->c;
 
-	// Bubble sort
-	while(flag)
+	a->f += b->f;
+	b->f = a->f - b->f;
+	a->f -= b->f;
+}
+
+void sort(record *rec, int size)
+{
+	int i, swapped = 1;
+
+	while(swapped)
 	{
-		flag = 0;
-		for(i = 0; i < counter - 1; i++)
+		swapped = 0;
+		for (i = 0; i < size - 1; i++)
 		{
-			f1 = freq[record[i] - ' '];
-			f2 = freq[record[i + 1] - ' '];
-			if(f1 > f2 || (f1 == f2 && record[i] < record[i+1]))
+			if (rec[i].f > rec[i+1].f || (rec[i].f == rec[i+1].f && rec[i].c < rec[i+1].c))
 			{
-				temp = record[i];
-				record[i] = record[i+1];
-				record[i + 1] = temp;
-				flag = 1;
+				swap(rec + i, rec + i + 1);
+				swapped = 1;
 			}
 		}
 	}
