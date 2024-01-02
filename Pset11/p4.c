@@ -1,158 +1,66 @@
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 
-#define SIZE 100
+// Write a program to evaluate a function in the format : F(G(F(4), 4))
+// With F(x) = 3 * x + 1 and G(x, y) = x * y - 3
 
-int f(int x);
-int g(int x, int y);
-int eval(char *s);
+// Solution
+// ---------
+// Create a recursive function that evaluate the expression until there are only digits in the string
+// Returns the result as an integer value
 
-// F(G(F(2), 1))
-// F(G(7, F(1)))
+// Algorithm
+// ---------
+// Parse the string to find F or G or a digit;
+// If F or G is found, increment the position variable and evaluate the expression found by also applying the suitable function
+// Else collect the digit found and return the integer value of it
+
+#define SIZE 50
+
+int isDigit(char c)
+{
+	return (c >= '0' && c <='9');
+}
+
+int isValid(char *exp)
+{
+	char *p = exp;
+	while(*p == 'F' || *p == 'G' || *p == '(' || *p == ')' || *p == ' ' || *p == ',' || isDigit(*p))
+		*p++;
+	return *p == '\0';
+}
+
+int eval(int *i, char *exp)
+{
+	// Looking for F, G or a digit
+	while(exp[*i] != 'F' && exp[*i] != 'G' && !isDigit(exp[*i]))
+		*i += 1;
+	if (exp[*i] == 'F' || exp[*i] == 'G')
+	{
+		*i += 1;
+		return (exp[*i - 1] == 'F') ? 3 * eval(i, exp) + 1 : eval(i, exp) * eval(i, exp) - 3;  
+	}
+
+	int n = 0;
+	while(isDigit(exp[*i]))
+	{
+		n += exp[*i] - '0';
+		*i += 1;
+	}
+
+	return n;
+}
 
 int main()
 {
-    char s[SIZE];
-    gets(s);
-    
-    eval(s);
-    printf("%s\n", s);
-    return 0;
-}
+	char exp[SIZE] = "";
+	int i = 0;
 
-char *getNum(int j, char *n)
-{
-    int l = 0, i = 0;
+	gets(exp);
+	if (isValid(exp))
+		printf("%d\n", eval(&i, exp));
+	else
+		printf("Invalid expression\n");
 
-    while(j)
-    {
-        n[l] = j % 10 + '0';
-        j /= 10;
-        l++;
-    }
-    n[l] = '\0';
-
-    if (l == 1)
-        return n;
-
-    while(i < l / 2)
-    {
-        n[i] += n[l - i - 1];
-        n[l - i - 1] = n[i] - n[l - i - 1];
-        n[i] -= n[l - i - 1]; 
-
-        i++;
-    }
-
-    return n;
-}
-
-int eval(char *s)
-{
-    if (s[0] >= '0' && s[0] <= '9')
-        return 0;
-    
-    // printf("%s\n", s);
-
-    int i = 0, j = 0, pos = 0, x = 0, y = 0, k = 0, l = 0;
-    char result[SIZE], n[SIZE];
-
-    while(s[i] != '\0')
-    {
-        pos = (s[i] == 'F' || s[i] == 'G') ? i : pos;
-        i++;
-    }
-
-    for (i = 0; i < pos; i++)
-        result[i] = s[i];
-
-    // Evaluate inner expression and replace in string
-    if (s[pos] == 'F')
-    {
-        // F(G(F(2), 1))
-        // Get the x value
-        k = 2;
-        while (s[pos + k] != ')')
-        {
-            x = (x * 10) + (s[pos + k] - '0');
-            k++;
-        }
-        
-        j = f(x);
-        // Writing the result
-        getNum(j, n);
-        while(n[l] != '\0')
-        {
-            result[i + l] = n[l];
-            l++;
-        }
-        i += l;
-
-        // Writing rest of operation if there is any
-        pos += k + 1;
-        while (s[pos] != '\0')
-        {
-            result[i] = s[pos];
-            i++;
-            pos++;
-        }
-        result[i] = '\0';
-
-        strcpy(s, result);
-        eval(s);
-    }
-    else if (s[pos] == 'G')
-    {
-        // F(G(7, 1))
-        // Get the x value
-        k = 2;
-        while (s[pos + k] != ',')
-        {
-            x = (x * 10) + (s[pos + k] - '0');
-            k++;
-        }
-
-        // Get the y value
-        k += 2;
-        while (s[pos + k] != ')')
-        {
-            y = (y * 10) + (s[pos + k] - '0');
-            k++;
-        }
-
-        j = g(x, y);
-        // Writing the result
-        getNum(j, n);
-        while(n[l] != '\0')
-        {
-            result[i + l] = n[l];
-            l++;
-        }
-        i += l;
-
-        // Writing rest of operation if there is any
-        pos += k + 1;
-        while (s[pos] != '\n' && s[pos] != '\0')
-        {
-            result[i] = s[pos];
-            i++;
-            pos++;
-        }
-        result[i] = '\0';
-
-        strcpy(s, result);
-        eval(s);
-    }
-
-    return 1;
-}
-
-int f(int x)
-{
-    return 3 * x + 1;
-}
-
-int g(int x, int y)
-{
-    return x * y - 3;
+	return 0;
 }
