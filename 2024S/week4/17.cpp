@@ -1,5 +1,5 @@
 #include<iostream>
-#include "Fraction.h"
+// #include "Fraction.h"
 using namespace std;
 
 int gcd(int a, int b) {
@@ -11,7 +11,7 @@ int lcm(int n, int m)
   return (n / gcd(n, m)) * m; 
 }
 
-const Fraction simplify( Fraction &f ) 
+Fraction simplify( Fraction &f ) 
 {
   // Find the greatest common divisor between the numerator and the denominator
   int n = f.getNumerator();
@@ -27,34 +27,21 @@ const Fraction simplify( Fraction &f )
   return f;
 }
 
-const Fraction operator+(const Fraction &first, const Fraction &second ) 
+Fraction operator+(const Fraction &first, const Fraction &second ) 
 {
   int denominator = lcm(first.getDenominator(), second.getDenominator());
   int numerator = ( first.getNumerator() * (denominator / first.getDenominator()) ) 
     + ( second.getNumerator() * (denominator / second.getDenominator()) );
 
-  Fraction result( numerator, denominator );
-  simplify(result);
-
-  return result;
+  return Fraction( numerator, denominator );
 } 
 
-const Fraction operator-(const Fraction &first, const Fraction &second )
+Fraction operator-(const Fraction &first, const Fraction &second )
 {
   Fraction negativeF(- (second.getNumerator()), second.getDenominator());
 
   return ( first + negativeF );
 }
-
-// const Fraction &operator=( Fraction &left, const Fraction &right )
-// {
-//   left.setNumerator( right.getNumerator() );
-//   left.setDenominator( right.getDenominator() );
-//   simplify( left );
-//
-//   return left;
-// }
-
 
 bool operator==( const Fraction &first, const Fraction &second )
 {
@@ -64,5 +51,6 @@ bool operator==( const Fraction &first, const Fraction &second )
   simplify(copyFirst);
   simplify(copySecond);
 
-  return ( (copyFirst.getNumerator() == copySecond.getNumerator()) && (copyFirst.getDenominator() == copySecond.getDenominator()) );
+  return ( (copyFirst.getNumerator() == copySecond.getNumerator()) 
+  && (copyFirst.getDenominator() == copySecond.getDenominator()) );
 }

@@ -75,11 +75,7 @@ public:
 
   Fraction &operator=( const Fraction &right )
   {
-    setNumerator( right.getNumerator() );
-    setDenominator( right.getDenominator() );
-    simplify();
-
-    return *this;
+    return Fraction( right.getNumerator(), right.getDenominator() );
   }
 
   void display() {

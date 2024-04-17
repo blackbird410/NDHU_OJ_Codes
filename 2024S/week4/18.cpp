@@ -8,81 +8,65 @@ public:
     if(m == 0)
       throw "divided by zero";
     denominator = m;
+    simplify();
   }
 
   Fraction operator=(const Fraction &b) {
     setNumerator(b.getNumerator());
     setDenominator(b.getDenominator());
-    reduce();
+    simplify();
 
     return *this;
   }
 
-  Fraction operator+(const Fraction &b) {
-    Fraction result;
+  Fraction operator+(const Fraction &b) 
+  {
     int d = getDenominator() * b.getDenominator();
 
-    result.setDenominator(d);
-    result.setNumerator((d / getDenominator()) * getNumerator() + (d / b.getDenominator()) * b.getNumerator());
-    result.reduce();
-
-    return result;
+    return Fraction((d / getDenominator()) * getNumerator() + 
+                    (d / b.getDenominator()) * b.getNumerator(), d);
   }
 
-  Fraction operator-(const Fraction &b) {
-    Fraction result;
-    int d = getDenominator() * b.getDenominator();
-
-    result.setDenominator(d);
-    result.setNumerator((d / getDenominator()) * getNumerator() - (d / b.getDenominator()) * b.getNumerator());
-    result.reduce();
-
-    return result;
+  Fraction operator-(const Fraction &second) 
+  {
+    return ( *this + Fraction(- (second.getNumerator()), second.getDenominator()));
   }
 
-  Fraction operator*(const Fraction &b) {
-    Fraction result;
-
-    result.setDenominator(getDenominator() * b.getDenominator());
-    result.setNumerator(getNumerator() * b.getNumerator());
-    result.reduce();
-
-    return result;
+  Fraction operator*(const Fraction &b) 
+  {
+    return Fraction(getNumerator() * b.getNumerator(), getDenominator() * b.getDenominator());
   }
 
-  Fraction operator/(const Fraction &b) {
-    Fraction reverse(b.getDenominator(), b.getNumerator());
-    Fraction result;
-
-    result.setDenominator(getDenominator() * reverse.getDenominator());
-    result.setNumerator(getNumerator() * reverse.getNumerator());
-    result.reduce();
-
-    return result;
+  Fraction operator/(const Fraction &b) 
+  {
+    return Fraction(getNumerator() * b.getDenominator(), getDenominator() * b.getNumerator());
   }
 
-  bool operator==(Fraction &b) {
-    b.reduce();
-    reduce();
-
+  bool operator==(Fraction &b) 
+  {
     return (getNumerator() == b.getNumerator() && getDenominator() == b.getDenominator());
   }
 
-  void reduce() {
+  int gcd(int a, int b) {
+    return (b) ? gcd(b, a % b) : a; 
+  }
+
+  int lcm(int n, int m)
+  {
+    return (n / gcd(n, m)) * m; 
+  }
+
+  void simplify() 
+  {
+    // Find the greatest common divisor between the numerator and the denominator
     int n = getNumerator();
     int d = getDenominator();
-    int g = gcd(abs(n), abs(d));
-
-    if (g > 1) {
-      if ((n < 0  && d > 0) || (n > 0 && d < 0)) {
-        setNumerator(-abs(n) / g);
-        setDenominator(abs(d) / g);
-      } else {
-        setNumerator(abs(n) / g);
-        setDenominator(abs(d) / g);
-      }
-      
-    } else if (!g)
+    int g = gcd(n, d);
+    if (g) 
+    {
+      setNumerator( n / g );
+      setDenominator( d / g );
+    } else 
       setDenominator(1);
   }
 
@@ -106,31 +90,6 @@ public:
     	cout << "(" << numerator << "/" << denominator << ")" << endl;
     else
         cout << numerator << endl;
-  }
-
-  int gcd(int m, int n)
-  {
-    // Euclid GCD
-    if (n == 0)
-      return 0;
-    else if (m == n)
-      return m;
-    else
-    {
-      if (m < n)
-      {
-        m += n;
-        n = m - n;
-        m -= n;
-      }
-
-      m -= n;
-
-      if (m > n)
-        return gcd(m, n);
-      else
-        return gcd(n, m);
-    }
   }
 
   friend std::ostream& operator << (std::ostream& out, const Fraction &f) {
