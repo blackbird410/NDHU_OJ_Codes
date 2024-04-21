@@ -68,6 +68,17 @@ public:
   };
 
   bool isEmpty() { return top == nullptr; }
+
+  bool contains( Node n, Cell &c)
+  {
+    if (n.getData() == c) 
+      return true;
+    else if ( n.getPrevious() == nullptr ) 
+      return false;
+    else 
+      return contains( *(n.getPrevious()), c); 
+  }
+
   int size( Node n ) 
   {
     return (n.getPrevious() == nullptr ) 
@@ -101,24 +112,18 @@ public:
 
   void flip(int index) 
   {
-    // Flip the stack at a specified index
-    // EXAMPLE:(1,1) (1,2) (2,2) (3,2) (3,3)
-    // Flip at index 2 will give
-    // => (1,1) (3,3) (3,2) (2,2) (1,2)
     int stackSize = size( getTop() );
     if ( index > 0 && index < stackSize) 
     {
       Stack temp;
       Node *head;
-      while (stackSize >= index)
+      for (size_t i = 0; i < stackSize - index + 1; ++i)
       {
         temp.push(getTop());
         pop();
 
         if (temp.size(temp.getTop()) == 1) 
           head = &temp.getTop();
-        
-        stackSize--;
       }
 
       // Pushing the removed elements in reverse order

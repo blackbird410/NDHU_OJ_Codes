@@ -13,10 +13,12 @@
 #define CONNECTED true
 
 typedef struct Coord {
-  int x, y;
+  int p, q;
+  Coord () {};
+  Coord(int _p, int _q) : p(_p), q(_q) {};
   friend std::ostream &operator<<( std::ostream &out, const Coord& c)
   {
-    out << "(" << c.x << ", " << c.y << ")";
+    out << "(" << c.p << ", " << c.q << ")";
     return out;
   }
 } Coord;
@@ -47,39 +49,69 @@ public:
     delete[] board;
   }
 
-  void setPosition( int x, int y )
+  void setPosition( int p, int q )
   {
-    position.x  = (x >= 0 && x < col ) 
-    ? x : throw std::invalid_argument("Invalid x coordinate for cell position.");
-    position.y = (y >= 0 && y < row) 
-      ? y : throw std::invalid_argument("Invalid y coordinate for cell position.");
+    position.p  = (p >= 0 && p <= row ) 
+    ? p : throw std::invalid_argument("Invalid p coordinate for cell position.");
+    position.q = (q >= 0 && q <= col) 
+      ? q : throw std::invalid_argument("Invalid q coordinate for cell position.");
     updateVisited();
   };
 
   bool hasUnvisitedNeighbor(Cell &c) 
   {
-    Coord p = c.getPosition();
+    Coord pos(c.getP(), c.getQ());
+    int index =  0;
+    bool visited = false;
+
+    if (pos.p < row) 
+    {
+      index = getArrayIndex(pos.p + 1, pos.q);
+      visited = board[index].getVisitedStatus();
+      if (!visited) return true; 
+    }
+    
+    if (pos.p > 1) 
+    {
+      index = getArrayIndex(pos.p - 1, pos.q);
+      visited = board[index].getVisitedStatus();
+      if (!visited) return true; 
+    }
+
+    if (pos.q > 1) 
+    {
+      index = getArrayIndex(pos.p, pos.q - 1);
+      visited = board[index].getVisitedStatus();
+      if (!visited) return true; 
+    }
+    
+    if (pos.q < col) 
+    {
+      index = getArrayIndex(pos.p, pos.q + 1);
+      visited = board[index].getVisitedStatus();
+      if (!visited) return true; 
+    }
 
     // Checking UP, DOWN, LEFT and RIGHT in the specified order
-    return (p.y < row && !(board[ (row - p.y - 1) * col + p.x ].getVisitedStatus())) 
-      || (p.y > 1  && !(board[ (row - p.y + 1) * col + p.x ].getVisitedStatus())) 
-      || ( p.x > 1 && !(board[ (row - p.y) * col + (p.x - 1) ].getVisitedStatus())) 
-      || ( p.x < col && !(board[ ( row - p.y) * col + (p.x + 1)].getVisitedStatus())));
+    // return ((p.y < row && !(board[  ].getVisitedStatus())) 
+    //   || (p.y > 1  && !(board[  ].getVisitedStatus())) 
+    //   || ( p.x > 1 && !(board[ (row - p.y) * col + p.x - 2 ].getVisitedStatus())) 
+    //   || ( p.x < col && !(board[ ( row - p.y) * col + p.x ].getVisitedStatus())));
+    return false;
   }
+
+  int getArrayIndex(Coord &p) { return ( row - p.p) * col + p.q - 1; };
+  int getArrayIndex(int p, int q) { return ( row - p) * col + q - 1; };
 
   void updateVisited()
   {
     // Push the current position to the visited Stack
-    Cell temp(position.x, position.y);
-    temp.setVisitedStatus(true);
-    Node n(temp);
-    visited.push(n);
-
-    // Check if the last cell added to the least has at least one unvisited neighbor 
-    while (!(visited.getTop().hasUnvisitedNeighbor()))
-      pop();
-
-    std::cout << "Visited: " << visited << std::endl;
+    int index = getArrayIndex(position);
+    if (!(board[index].getVisitedStatus())) {
+      board[index].setVisitedStatus(true);
+      Node n(board[index]);
+      visited.push(n);
+    }
   }
 
   Coord &getPosition(){ return position; }; 
@@ -90,41 +122,39 @@ public:
 
   void move(int direction) 
   {
-    // If a cell has been visited, can we allow it to be visited twice
-
     switch (direction) 
     {
       case UP:
-        if (position.y < row)
+        if (position.p < row)
         {
           // Creates a path between the two cells
-          board[(row - position.y) * col + (position.x - 1)].setNeighbor(UP, CONNECTED);
-          position.y += 1;
-          board[(row - position.y) * col + (position.x - 1)].setNeighbor(DOWN, CONNECTED);
+          board[getArrayIndex(position)].setNeighbor(UP, CONNECTED);
+          position.p += 1;
+          board[getArrayIndex(position)].setNeighbor(DOWN, CONNECTED);
         }
         break;
       case DOWN:
-        if (position.y > 1)
+        if (position.p > 1)
         {
-          board[(row - position.y) * col + (position.x - 1)].setNeighbor(DOWN, CONNECTED);
-          position.y -= 1;
-          board[(row - position.y) * col + (position.x - 1)].setNeighbor(UP, CONNECTED);
+          board[getArrayIndex(position)].setNeighbor(DOWN, CONNECTED);
+          position.p -= 1;
+          board[getArrayIndex(position)].setNeighbor(UP, CONNECTED);
         }
         break;
       case LEFT:
-        if (position.x > 1)
+        if (position.q > 1)
         {
-          board[(row - position.y) * col + (position.x - 1)].setNeighbor(LEFT, CONNECTED);
-          position.x -= 1;
-          board[(row - position.y) * col + (position.x - 1)].setNeighbor(RIGHT, CONNECTED);
+          board[getArrayIndex(position)].setNeighbor(LEFT, CONNECTED);
+          position.q -= 1;
+          board[getArrayIndex(position)].setNeighbor(RIGHT, CONNECTED);
         }
         break;
       case RIGHT:
-        if (position.x < col)
+        if (position.q < col)
         {
-          board[(row - position.y) * col + (position.x - 1)].setNeighbor(RIGHT, CONNECTED);
-          position.x += 1;
-          board[(row - position.y) * col + (position.x - 1)].setNeighbor(LEFT, CONNECTED);
+          board[getArrayIndex(position)].setNeighbor(RIGHT, CONNECTED);
+          position.q += 1;
+          board[getArrayIndex(position)].setNeighbor(LEFT, CONNECTED);
         }
         break;
       default:
@@ -149,6 +179,7 @@ public:
 
       // Flip the stack of the visited cells
       visited.flip(flipIndex);
+      // std::cout << "Stack flipped =>" << visited << std::endl;
     }
     else 
     {
@@ -170,7 +201,7 @@ public:
           break;
       }
     }
-  }
+  };
 
   friend std::ostream &operator<<( std::ostream &out, const Grid& g)
   {

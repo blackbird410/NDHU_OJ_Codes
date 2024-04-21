@@ -9,42 +9,42 @@
 
 class Cell
 {
-  int x, y;
+  int p, q;
   bool neighbor[4];
   bool isVisited;
 public:
   Cell() : isVisited(false) {};
   Cell(Cell &c) 
   {
-    setX(c.getX());
-    setY(c.getY());
+    setP(c.getP());
+    setQ(c.getQ());
     for( size_t i = 0; i < 4; ++i)
       neighbor[i] = c.getNeighbor(i);
     isVisited = c.getVisitedStatus();
   }
 
-  Cell(int _x, int _y) : isVisited(false) 
+  Cell(int _p, int _q) : isVisited(false) 
   {
-    setX(_x);
-    setY(_y);
+    setP(_p);
+    setQ(_q);
     for( size_t i = 0; i < 4; ++i)
       neighbor[i] = false;
   }
 
-  void setX(int _x) 
+  void setP(int _p) 
   { 
-    x = ( _x > 0 ) ? _x : throw std::invalid_argument("Invalid argument");
+    p = ( _p > 0 ) ? _p : throw std::invalid_argument("Invalid argument");
   };
 
-  void setY(int _y) 
+  void setQ(int _q) 
   { 
-    y = ( _y > 0 ) ? _y : throw std::invalid_argument("Invalid argument"); 
+    q = ( _q > 0 ) ? _q : throw std::invalid_argument("Invalid argument"); 
   };
 
   void setVisitedStatus(bool status) { isVisited = status; };
 
-  int getX() { return x; };
-  int getY() { return y; };
+  int getP() { return p; };
+  int getQ() { return q; };
   bool getVisitedStatus() { return isVisited; };
   bool getNeighbor(int index)
   {
@@ -66,17 +66,18 @@ public:
     // Avoids self-assignment
     if ( this != &c )
     {
-      setX(c.x);
-      setY(c.y);
+      setP(c.p);
+      setQ(c.q);
       for ( size_t i = 0; i < 4; ++i )
         neighbor[i] = c.neighbor[i];
+      isVisited = c.isVisited;
     }
     return *this;
   }
 
   bool operator==( const Cell& other )
   {
-    if (x != other.x || y != other.y )
+    if (p != other.p || q != other.q )
       return false;
     for ( size_t i = 0; i < 4; ++i )
       if ( neighbor[i] != other.neighbor[i] )
@@ -92,7 +93,7 @@ public:
   
   friend std::ostream &operator<<( std::ostream &out, const Cell& c)
   {
-    out << "(" << c.x << ", " << c.y << ")";
+    out << "(" << c.p << ", " << c.q << ")";
     return out;
   }
 };
