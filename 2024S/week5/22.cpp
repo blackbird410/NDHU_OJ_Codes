@@ -47,23 +47,16 @@ public:
     return dateStr;
   }
 
-  int daysLeft()
-  {
-    // Finds the number of days left in the year
-    int days = getMonthDays(month, year) - day;
-    int m = month;
-    while( ++m < 13 )
-      days += getMonthDays(m, year);
-
-    return days;
-  };
-
-  int daysBetweenYears(int start, int end)
+  int daysBeforeDate()
   {
     int days = 0;
-    while( ++start < end )
-      days += 365 + isLeapYear(start);
-    return days;
+    for ( size_t y = 1900; y < year; ++y )
+      days += 365 + isLeapYear(y);
+
+    for (size_t m = 1; m < month; ++m)
+      days += getMonthDays(m, year);
+
+    return days + day;
   };
 
   int getMonthDays(int m, int year) {
@@ -90,11 +83,7 @@ public:
 
   int operator-( Date& other )
   {
-    int days = daysLeft();
-    days += daysBetweenYears(other.year, year + 1);
-    days -= other.daysLeft();
-
-    return days;
+    return abs(daysBeforeDate() - other.daysBeforeDate());
   }
 
   friend std::istream &operator>>( std::istream &input, Date &d )
@@ -112,11 +101,7 @@ int main()
   Date d1, d2;
 
   std::cin >> d1 >> d2;
-
   std::cout << (d2 - d1) << std::endl;
-
-  std::cout << d1.toString() << std::endl;
-  std::cout << d2.toString() << std::endl;
 
   return 0;
 }
