@@ -47,7 +47,7 @@ bool Array::operator==( const Array& other ) const
     if ( ptr[i] != other.ptr[i] )
       return false;
 
-  return false;
+  return true;
 };
 
 Array& Array::operator=( const Array& other) 

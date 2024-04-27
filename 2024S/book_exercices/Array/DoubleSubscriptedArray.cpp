@@ -21,33 +21,31 @@ DoubleSubscriptedArray::DoubleSubscriptedArray( const DoubleSubscriptedArray& ot
     ptr[i] = new Array(col);
 
   for ( i = 0; i < row; ++i )
-    ptr[i] = other.ptr[i];
+    *ptr[i] = *(other.ptr[i]);
 };
 
 DoubleSubscriptedArray::~DoubleSubscriptedArray() 
 {
-  // Free all pointers in Array objects in the DoubleSubscriptedArray
-  for ( size_t i = 0; i < row; ++i )
-    delete ptr[i];
+  for (size_t i = 0; i < row; ++i) 
+    delete ptr[i]; // Delete each Array object in the Row
+    
+  delete[] ptr; // Delete the array of pointers
+}
 
-  // Free the array of pointers of DoubleSubscriptedArray
-  delete[] ptr;
-};
-
-Array* DoubleSubscriptedArray::operator[]( const int subscript )
+Array& DoubleSubscriptedArray::operator[]( const int subscript )
 {
   if ( subscript < 0 || subscript >= row )
     throw std::out_of_range("Row subscript out of range.");
 
-  return ptr[ subscript ]; 
+  return *ptr[ subscript ]; 
 };
 
-Array* DoubleSubscriptedArray::operator[]( const int subscript ) const
+Array& DoubleSubscriptedArray::operator[]( const int subscript ) const
 {
   if ( subscript < 0 || subscript >= row )
     throw std::out_of_range("Row subscript out of range.");
 
-  return ptr[ subscript ]; 
+  return *ptr[ subscript ]; 
 };
 
 bool DoubleSubscriptedArray::operator==( const DoubleSubscriptedArray& other ) const
@@ -56,7 +54,7 @@ bool DoubleSubscriptedArray::operator==( const DoubleSubscriptedArray& other ) c
     return false;
 
   for ( size_t i = 0; i < row; ++i )
-    if ( ptr[i] != other.ptr[i] )
+    if ( *ptr[i] != *(other.ptr[i]) )
       return false;
 
   return true;
@@ -83,7 +81,7 @@ DoubleSubscriptedArray& DoubleSubscriptedArray::operator=( const DoubleSubscript
     }
 
     for ( i = 0; i < row; ++i )
-      ptr[i] = other.ptr[i];
+      *ptr[i] = *(other.ptr[i]);
   }
 
   return *this;
@@ -91,7 +89,7 @@ DoubleSubscriptedArray& DoubleSubscriptedArray::operator=( const DoubleSubscript
 
 std::ostream &operator<<( std::ostream &out, const DoubleSubscriptedArray& a )
 {
-  for ( size_t i = 0; i < a.row; ++i )
+  for ( size_t i = 0; i < a.row; ++i, out << std::endl )
     out << *(a.ptr[i]);
   return out;
 }

@@ -18,7 +18,9 @@ int main()
   
   std::cout << "Initializing array c from a:" << std::endl;
   Array c(a);
-  std::cout << "Arrar c:\n" << c << std::endl;
+  std::cout << "Array c:\n" << c << std::endl;
+
+  std::cout << "c[4] = " << c[4] << std::endl;
 
   return 0;
 }
