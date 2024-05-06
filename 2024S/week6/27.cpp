@@ -1,7 +1,3 @@
-#include <iostream>
-#include <ctime>
-#include <cstdlib>
-
 class LinkedList
 {
     public :
@@ -143,34 +139,3 @@ class LinkedList
     protected :
         Node *head ;
 } ;
-
-int main() 
-{
-	LinkedList *l = new LinkedList();
-	srand( time(0) );
-	
-	std::cout << "List Size: " << l->getSize() << std::endl;
-
-	for( size_t i = 0; i < 10; ++i )
-	{
-		if( i % 2 ) l->addFromHead( rand() % 100 );
-		else l->addFromTail( rand() % 100 - 100 ); 
-		std::cout << l;
-	}
-
-	std::cout << l << std::endl;
-	std::cout << "List Size: " << l->getSize() << std::endl;
-
-	l->removeFromHead();
-	std::cout << l << std::endl;
-
-	l->removeFromTail();
-	std::cout << l << std::endl;
-
-	std::cout << "List Size: " << l->getSize() << std::endl;
-
-	delete l;
-
-	return 0;
-	
-}
