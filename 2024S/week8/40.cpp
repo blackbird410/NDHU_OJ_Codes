@@ -64,13 +64,6 @@ double getDistance(std::vector<Coord>& coords, int* y_max) {
   for (i = 1; i < coords.size() && temp_y_max != *y_max; ++i) {
     if( coords[i].getY() > temp_y_max) {
 
-      // int x_c = coords[i].getX();
-      // int x_p = coords[i-1].getX();
-      // int y_c = coords[i].getY();
-      // int y_p = coords[i-1].getY();
-      //
-      // sum += sqrt(pow(y_c - y_p, 2) + pow(x_p - x_c, 2)) - sqrt(pow(temp_y_max - y_p, 2) * (1 + pow(x_p - x_c, 2) / pow(y_c - y_p, 2)));
-      //
       b = coords[i];
       c = coords[i-1];
       a = Coord(b.getX(), c.getY());

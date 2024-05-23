@@ -44,7 +44,6 @@ public:
 
   Date previousDay() const {
     Date previous = *this;
-    days_in_month[2] = 28 + previous.isLeapYear();
 
     previous.day--;
     if (!previous.day) {
@@ -53,7 +52,7 @@ public:
         previous.year--;
         previous.month = 12;
       }
-      previous.day = days_in_month[previous.month];
+      previous.day = (previous.month == 2) ? days_in_month[previous.month] + previous.isLeapYear() : days_in_month[previous.month];
     }
     return previous;
   }
@@ -177,14 +176,14 @@ public:
   }
 
   void updateRanges() {
-    requiredRanges = mergeRanges(requiredRanges);
+    //requiredRanges = mergeRanges(requiredRanges);
     pastRanges = mergeRanges(pastRanges);
   }
   
   std::vector<DateRange> processRanges() {
     updateRanges();
-    std::sort(requiredRanges.begin(), requiredRanges.end());
-    std::sort(pastRanges.begin(), pastRanges.end());
+    //std::sort(requiredRanges.begin(), requiredRanges.end());
+    //std::sort(pastRanges.begin(), pastRanges.end());
     
     std::vector<DateRange> neededRanges;
 
@@ -232,8 +231,8 @@ private:
 };
 
 int main() {
-  std::ofstream out;
-  out.open("output.txt", std::ios::app);
+//   std::ofstream out;
+//   out.open("my_output.txt", std::ios::app);
   int NX, NR;
   int caseNumber = 1;
   
@@ -257,19 +256,19 @@ int main() {
     std::vector<DateRange> result = manager.processRanges();
     
     std::cout << "Case " << caseNumber << ":\n";
-    out << "Case " << caseNumber << ":\n";
+    // out << "Case " << caseNumber << ":\n";
     if (result.empty()) {
       std::cout << "No additional quotes are required.\n";
-      out << "No additional quotes are required.\n";
+    //   out << "No additional quotes are required.\n";
     } else {
       for (const auto& r : result) {
         std::cout << r.toString() << "\n";
-        out << r.toString() <<  std::endl;
+        // out << r.toString() <<  std::endl;
       }
     }
     caseNumber++;
   }
-  out.close();
+//   out.close();
   
   return 0;
 }
