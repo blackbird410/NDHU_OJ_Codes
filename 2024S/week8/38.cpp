@@ -14,6 +14,7 @@ int days_in_month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 class Date {
 public:
   int day, month, year;
+  Date() {};
   Date(std::string date) { parseDate(date); };
   Date(const Date& other) : day(other.day), month(other.month), year(other.year) {};
 
@@ -27,11 +28,10 @@ public:
 
   Date nextDay() const {
     Date next = *this;
-    days_in_month[2] = 28 + next.isLeapYear();
 
     next.day++;
     if (next.day > days_in_month[next.month]) {
-      next.day = 1;
+      next.day = (next.month == 2 && next.isLeapYear()) ? 29 : 1;
       next.month++;
 
       if (next.month > 12) {
@@ -51,7 +51,7 @@ public:
       if (!previous.month) {
         previous.year--;
         previous.month = 12;
-      }
+      } 
       previous.day = (previous.month == 2) ? days_in_month[previous.month] + previous.isLeapYear() : days_in_month[previous.month];
     }
     return previous;
@@ -63,8 +63,8 @@ public:
     return std::string(buf);
   }
 
-  std::string usFormat() const {
-    return std::to_string(year*10000 + month * 100 + day);
+  int usFormat() const {
+    return std::stoi(std::to_string(year*10000 + month * 100 + day));
   };
 
   Date& operator=(const Date& other) {
@@ -75,15 +75,15 @@ public:
   };
 
   bool operator>(const Date& other) const {
-    return std::stoi(this->usFormat()) > std::stoi(other.usFormat());
+    return (this->usFormat() > other.usFormat());
   }
 
   bool operator<(const Date& other) const {
-    return std::stoi(this->usFormat()) < std::stoi(other.usFormat());
+    return (this->usFormat() < other.usFormat());
   }
 
   bool operator==(const Date& other) const {
-    return std::stoi(this->usFormat()) == std::stoi(other.usFormat());
+    return (this->usFormat() == other.usFormat());
   }
 
   bool operator!=(const Date& other) const {
@@ -101,29 +101,21 @@ public:
 
 class DateRange {
 public:
-  DateRange(const std::string& _start, const std::string& _end ) : start(Date(_start)), end(Date(_end)) {};
+  DateRange(const std::string& _start, const std::string& _end ) 
+  : start(Date(_start)), end(Date(_end)) {};
+
   DateRange(const Date& _start, const Date& _end ) : start(Date(_start)), end(Date(_end)) {};
+  
   Date start, end;
 
-  bool include(const DateRange& other) const {
+  bool includes(const DateRange& other) const {
     return (this->start <= other.start && other.end <= this->end);
   };
 
-  bool overlaps(const DateRange& other) const {
-    return (this->include(other) || other.include(*this) 
-    || (*this < other && this->end > other.start) || (other < *this && other.end > this->start));
-  }
-
-  bool contiguous(const DateRange& other) const {
-    return (this->start == other.end || this->end == other.start);
-  };
-
   bool overlapsOrContiguous(const DateRange& other) const {
-    return !(this->end < other.start.previousDay() || other.end.nextDay() < this->start);
-  }
-  // bool overlapsOrContiguous(const DateRange& other) const {
-  //     return !(this->end < other.start - 1 || this->start > other.end + 1);
-  // }
+      return !(this->end.usFormat() < other.start.usFormat() - 1 
+      || this->start.usFormat() > other.end.usFormat() + 1);
+ }
 
   void merge(const DateRange& other) {
     this->start = (this->start < other.start) ? this->start : other.start;
@@ -131,7 +123,27 @@ public:
   }
 
   bool operator<(const DateRange& other) const {
-    return this->start < other.start;
+    return this->start < other.start || this->start == other.start && this->end < other.end;
+  }
+
+  bool operator>(const DateRange& other) const {
+    return *this != other && !(*this < other);
+  }
+
+  bool operator<=(const DateRange& other) const {
+    return (*this < other || *this == other);
+  }
+
+  bool operator>=(const DateRange& other) const {
+    return (*this > other || *this == other);
+  }
+
+  bool operator==(const DateRange& other) const {
+    return this->start == other.start && this->end == other.end;
+  }
+
+  bool operator!=(const DateRange& other) const {
+    return !(*this == other);
   }
 
   std::string toString() const {
@@ -152,6 +164,10 @@ public:
   
   void addRequiredRange(const std::string& start, const std::string& end) {
     requiredRanges.push_back(DateRange(start, end));
+  }
+
+  bool isValid(const DateRange& d) const {
+    return (d.start < d.end);
   }
 
   std::vector<DateRange> mergeRanges(std::vector<DateRange> neededRanges) {
@@ -176,49 +192,82 @@ public:
   }
 
   void updateRanges() {
-    //requiredRanges = mergeRanges(requiredRanges);
+    requiredRanges = mergeRanges(requiredRanges);
     pastRanges = mergeRanges(pastRanges);
   }
-  
-  std::vector<DateRange> processRanges() {
+
+  std::vector<DateRange> reverseProcessRanges() {
+    std::sort(requiredRanges.begin(), requiredRanges.end());
+    std::sort(pastRanges.begin(), pastRanges.end(), std::greater<DateRange>());
     updateRanges();
-    //std::sort(requiredRanges.begin(), requiredRanges.end());
-    //std::sort(pastRanges.begin(), pastRanges.end());
-    
+
     std::vector<DateRange> neededRanges;
 
-    // Find out which requiredRanges had been requested in the pastRanges
-    // Three situation can happen:
-    // - The requiredRange is all included in a pastRange (1)
-    // - The requiredRange is partly included in a pastRanges (2)
-    // - The requiredRange is not included at all in the pastRange (3)
-    //
-    // Case 1: requiredRange not needed, skip it 
-    // Case 2: Modify the required range by removing the part that is the pastRange and add it
-    // Case 3: Add it as it is to the neededRanges
-    
     for (const auto& req : requiredRanges) {
       bool needed = true;
       for (auto& past : pastRanges) {
-        if (past.overlapsOrContiguous(req)) {
-          if (!past.include(req)) {
-            if (req.include(past)) {
-              // Remove the part that is in past 
-              neededRanges.push_back(DateRange(req.start, past.start.previousDay())); 
-              neededRanges.push_back(DateRange(past.end.nextDay(), req.end));
+        if (isValid(req) && past.overlapsOrContiguous(req)) {
+          if (!past.includes(req)) {
+            if (req.includes(past)) {
+              // Remove the part that is in past
+              if (req.start < past.start)  
+                neededRanges.push_back(DateRange(req.start, past.start.previousDay())); 
+              if (req.end > past.end)
+                neededRanges.push_back(DateRange(past.end.nextDay(), req.end));
+            } else if (past.start <= req.start && req.end <= past.end) {
+              neededRanges.push_back(DateRange(past.end.nextDay(), req.start.previousDay()));
             } else if (past < req) {
               neededRanges.push_back(DateRange(past.end.nextDay(), req.end));
             } else if (req < past) {
               neededRanges.push_back(DateRange(req.start, past.start.previousDay()));
             }
-            past.merge(req);
+            //past.merge(req);
           }
           needed = false;
           break;
         }
       }
 
-      if (needed) {
+      if (needed && isValid(req)) {
+        neededRanges.push_back(req);
+      }
+    }
+    return mergeRanges(neededRanges);
+  }
+
+  std::vector<DateRange> processRanges() {
+    std::sort(requiredRanges.begin(), requiredRanges.end());
+    std::sort(pastRanges.begin(), pastRanges.end());
+    updateRanges();
+
+    std::vector<DateRange> neededRanges;
+    
+    for (const auto& req : requiredRanges) {
+      bool needed = true;
+      for (auto& past : pastRanges) {
+        if (isValid(req) && past.overlapsOrContiguous(req)) {
+          if (!past.includes(req)) {
+            if (req.includes(past)) {
+              // Remove the part that is in past
+              if (req.start < past.start)  
+                neededRanges.push_back(DateRange(req.start, past.start.previousDay())); 
+              if (req.end > past.end)
+                neededRanges.push_back(DateRange(past.end.nextDay(), req.end));
+            } else if (past.start <= req.start && req.end <= past.end) {
+              neededRanges.push_back(DateRange(past.end.nextDay(), req.start.previousDay()));
+            } else if (past < req) {
+              neededRanges.push_back(DateRange(past.end.nextDay(), req.end));
+            } else if (req < past) {
+              neededRanges.push_back(DateRange(req.start, past.start.previousDay()));
+            }
+            //past.merge(req);
+          }
+          needed = false;
+          break;
+        }
+      }
+
+      if (needed && isValid(req)) {
         neededRanges.push_back(req);
       }
     }
@@ -231,8 +280,8 @@ private:
 };
 
 int main() {
-//   std::ofstream out;
-//   out.open("my_output.txt", std::ios::app);
+  std::ofstream out;
+  out.open("my_output.txt", std::ios::app);
   int NX, NR;
   int caseNumber = 1;
   
@@ -252,23 +301,27 @@ int main() {
       std::cin >> start >> end;
       manager.addRequiredRange(start, end);
     }
-    
-    std::vector<DateRange> result = manager.processRanges();
+
+    manager.processRanges();
+    std::vector<DateRange> result = manager.reverseProcessRanges();
     
     std::cout << "Case " << caseNumber << ":\n";
-    // out << "Case " << caseNumber << ":\n";
+    out << "Case " << caseNumber << ":\n";
     if (result.empty()) {
       std::cout << "No additional quotes are required.\n";
-    //   out << "No additional quotes are required.\n";
+      out << "    " << "No additional quotes are required.\n";
     } else {
       for (const auto& r : result) {
         std::cout << r.toString() << "\n";
-        // out << r.toString() <<  std::endl;
+        out << "    " << r.toString() <<  std::endl;
       }
     }
     caseNumber++;
+    if (caseNumber == 35) 
+      std::cout << "Will fail" << std::endl;
+    out << "\n";
   }
-//   out.close();
+  out.close();
   
   return 0;
 }
