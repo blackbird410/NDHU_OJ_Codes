@@ -93,18 +93,15 @@ class Train {
 			else return addFromTail(weight);
 		}
 
-		friend std::ostream& operator<<( std::ostream& out, Train* l) {
-			if (l->getHead() == nullptr) return out;
-			Node *temp = l->getHead();
-
-			while (temp->getNext() != nullptr) {
-				out << temp << " => ";
-				temp = temp->getNext();
-			}
-			out << temp;
-
-			return out;
-		};
+		friend std::ostream& operator<<(std::ostream& out, Train* l) {
+            if (!l->getHead()) return out;
+            Node* temp = l->getHead();
+            while (temp != nullptr) {
+                out << temp << (temp->getNext() ? " => " : "");
+                temp = temp->getNext();
+            }
+            return out;
+        }
 	private:
 			Node *head;
 };
@@ -159,10 +156,12 @@ class TrainManager {
 		};
 
 		void cleanStation() {
-			trains.clear();
-			carWeights.clear();
-		};
-
+            for (Train* t : trains) {
+                delete t;
+            }
+            trains.clear();
+            carWeights.clear();
+        }
 		friend std::ostream& operator<<( std::ostream& out, const TrainManager manager) {
 			for( const auto& t: manager.trains) {
 				out << t << std::endl;
