@@ -26,7 +26,6 @@ public:
         for (int i = n - 1; i >= 0; --i) {
             int len1, len2;
 
-            // Calculate LDS
             auto it = std::lower_bound(LDS.begin(), LDS.end(), carWeights[i]);
             if (it == LDS.end()) {
                 LDS.push_back(carWeights[i]);
@@ -36,7 +35,6 @@ public:
                 len2 = it - LDS.begin() + 1;
             }
 
-            // Calculate LIS
             it = std::lower_bound(LIS.begin(), LIS.end(), -carWeights[i]);
             if (it == LIS.end()) {
                 LIS.push_back(-carWeights[i]);

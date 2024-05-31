@@ -39,7 +39,7 @@ public:
       int days_in_month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
       int year = value / 10000, month = value % 10000/100, day = value % 100;
 
-      if ((year%4 == 0 && year%100 != 0) || year%400 == 0)
+      if (isLeapYear(year))
         days_in_month[2] = 29;
       if (month == 1 && day == 1) 
         year--, month = 12, day = 31;
@@ -52,7 +52,6 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream& out, const Date& d) {
-      // int yy = d.value / 10000, mm = d.value % 10000 / 100, dd = d.value % 100;
       out << d.value % 10000 / 100 << "/" << d.value % 100 << "/" << d.value / 10000;
       return out;
     }
@@ -111,7 +110,6 @@ public:
                 date.push_back(Date(it->first));
             }
 
-            // Checkmark the requested dates in the calendar
             std::vector<int> mark(size, 0);
             for (i = 0; i < NR; ++i) {
                 start = calendar[newRequests[i].start];
@@ -120,7 +118,6 @@ public:
                     mark[j] = NEEDED;
             }
 
-            // Iterate over the pastRequests and mark the available quotes
             for (i = 0; i < NX; ++i) {
                 start = calendar[pastRequests[i].start];
                 end = calendar[pastRequests[i].end];
