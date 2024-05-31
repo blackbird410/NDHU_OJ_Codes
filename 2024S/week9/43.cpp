@@ -262,8 +262,10 @@ public :
   }
   friend ostream &operator<<(ostream &out, Decoder4_16 dec) {
     // Returns the value of all the dec2_4
-    for (size_t i = 0; i < 4; ++i)
-      out << (dec.dec2_4[i]) << std::endl;
+    for (size_t i = 0; i < 4; ++i) {
+      Decoder2_4* d = dec.dec2_4[i];
+      out << *d << std::endl;
+    }
     return out;
   }
   int output() {
@@ -274,7 +276,7 @@ public :
     return (3 - i) * 4 + i;
   }
 private :
-  Decoder *dec2_4[5] ;
+  Decoder2_4 *dec2_4[5] ;
 } ;
 
 int main() {
