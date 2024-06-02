@@ -137,6 +137,105 @@ private:
     Gate *component[5];
 };
 
+class Adder
+{
+public:
+    virtual void setValue(bool, int) = 0;
+    virtual void setValue(Gate *, int) = 0;
+    virtual Gate *sum() = 0;
+    virtual Gate *carryOut() = 0;
+};
+
+class OneBitHalfAdder : public Adder
+{
+public:
+    OneBitHalfAdder()
+    {
+        component[0] = new XOR;
+        component[1] = new AND;
+    }
+    virtual void setValue(bool val, int pin)
+    {
+        if (val)
+        {
+            component[0]->setValue(&t, pin);
+            component[1]->setValue(&t, pin);
+        }
+        else
+        {
+            component[0]->setValue(&f, pin);
+            component[1]->setValue(&f, pin);
+        }
+    }
+
+    virtual void setValue(Gate *gate, int pin)
+    {
+        component[0]->input[pin] = gate;
+        component[1]->input[pin] = gate;
+    }
+
+    virtual Gate *sum()
+    {
+        return component[0];
+    }
+    virtual Gate *carryOut()
+    {
+        return component[1];
+    }
+
+private:
+    Gate *component[2];
+};
+
+class OneBitFullAdder : public Adder
+{
+public:
+    OneBitFullAdder()
+    {
+        a[0] = new OneBitHalfAdder;
+        a[1] = new OneBitHalfAdder;
+        carry = new OR;
+    }
+
+    virtual void setValue(bool val, int pin)
+    {
+        if (pin < 2)
+            a[0]->setValue(val, pin);
+        else
+            a[1]->setValue(val, 1);
+
+        a[1]->setValue(a[0]->sum(), 0);
+        carry->setValue(a[0]->carryOut(), 0);
+        carry->setValue(a[1]->carryOut(), 1);
+    }
+
+    virtual void setValue(Gate *gate, int pin)
+    {
+        if (pin < 2)
+            a[0]->setValue(gate, pin);
+        else
+            a[1]->setValue(gate, 1);
+
+        a[1]->setValue(a[0]->sum(), 0);
+        carry->setValue(a[0]->carryOut(), 0);
+        carry->setValue(a[1]->carryOut(), 1);
+    }
+
+    virtual Gate *sum()
+    {
+        return a[1]->sum();
+    }
+
+    virtual Gate *carryOut()
+    {
+        return carry;
+    }
+
+private:
+    Adder *a[2];
+    Gate *carry;
+};
+
 class Decoder
 {
     public :
@@ -236,7 +335,7 @@ public :
 
         for (size_t i = 0; i < 5; ++i)
             dec2_4[i] = new Decoder2_4;
-        
+
         dec2_4[4]->setEnable(this->enable);
     }
    
@@ -299,17 +398,79 @@ private :
 } ;
 
 
-int main() {
-    Decoder4_16 d(true);
-    
-    d.setValue(true, 0);
-    d.setValue(false, 1);
-    d.setValue(false, 2);
-    d.setValue(true, 3);
+class FourBitsRippleAdder : public Adder
+{
+public:
+    FourBitsRippleAdder() {
+        for (size_t i = 0; i < 4; ++i)
+            fullAdder[i] = new OneBitFullAdder;
+        setValue(false, 11);
+    }
 
-    std::cout << d[15]->output() << std::endl;
-    std::cout << d << std::endl;
-    std::cout << d.output() << std::endl;
+    virtual void setValue(bool val, int pin) {
+        // Has 12 pins from top to bottom
+        fullAdder[pin / 3]->setValue(val, pin % 3);
+    }
+
+    virtual void setValue(Gate* gate, int pin) {
+        fullAdder[pin / 3]->setValue(gate, pin % 3);
+    }
+
+    virtual Adder* operator[](int n) {
+        _out();
+        if (n < 0 || n > 3) return nullptr;
+        return fullAdder[n];
+    }
+
+    virtual Gate* sum() override {
+        return fullAdder[0]->sum();
+    };
+
+    virtual Gate* carryOut() override {
+        return fullAdder[0]->carryOut();
+    };
+
+    friend std::ostream& operator<<(std::ostream& out, FourBitsRippleAdder f) {
+        out << f.fullAdder[0]->carryOut()->output() << " ";
+        for (size_t i = 0; i < 4; ++i) 
+            out << f.fullAdder[i]->sum()->output() << " ";
+        return out;
+    }
+
+private:
+    OneBitFullAdder* fullAdder[4];
+
+    void _out() {
+        // The smaller digit's carryOut becomes the larger digit's carryIn
+        for (size_t i = 2; i >= 0; --i) {
+            fullAdder[i]->setValue(fullAdder[i+1]->carryOut(), 3 * i + 2);
+        }
+    }
+} ;
+
+class Decoder5_32 : public Decoder {
+    // Make the sum with a FourBitsRippleAdder
+    // Output the result with this Decoder5_32
+    // Convert it to decimal
+} ;
+
+
+
+int main() {
+    FourBitsRippleAdder f;
+
+    // 0 0 0 1
+    // 1 0 0 0
+    f.setValue(false, 10);
+    f.setValue(true, 9);
+    f.setValue(false, 6);
+    f.setValue(false, 7);
+    f.setValue(false, 4);
+    f.setValue(false, 3);
+    f.setValue(true, 1);
+    f.setValue(false, 0);
+
+    std::cout << f << std::endl;
 
     return 0;
 }
