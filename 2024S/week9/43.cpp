@@ -239,10 +239,7 @@ public :
         
         dec2_4[4]->setEnable(this->enable);
     }
-    // ~Decoder4_16() {
-    //     for(size_t i = 0; i < 5; ++i) 
-    //         delete dec2_4[i];
-    // }
+   
     virtual void setEnable(bool val) {
         if (val) this->enable = &t;
         else this->enable = &f;
@@ -264,17 +261,16 @@ public :
                 dec2_4[i]->setValue(gate, pin);
     };
 
-    virtual Gate *operator[](int n) {
+    virtual Gate *operator[](int n) override {
         _out();
-        if (n < 0 || n > 3) return nullptr;
-        return (*dec2_4[4])[3 - n];
+        if (n < 0 || n > 15) return nullptr;
+        return (*dec2_4[n / 4])[n % 4];
     };
     
     friend ostream &operator<<(ostream &out, Decoder4_16 dec) {
-        for (int i = 3; i >= 0; --i) {          
-            std::cout << *dec.dec2_4[i];
+        for (int i = 15; i >= 0; --i) {
+            out << dec[i]->output() << " ";          
         }
-
         return out;
     }
 
@@ -311,7 +307,7 @@ int main() {
     d.setValue(false, 2);
     d.setValue(false, 3);
 
-    std::cout << d[3]->output() << std::endl;
+    std::cout << d[15]->output() << std::endl;
     std::cout << d << std::endl;
     std::cout << d.output() << std::endl;
 
