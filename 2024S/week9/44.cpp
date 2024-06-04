@@ -245,6 +245,9 @@ class Decoder
         virtual void setEnable(Gate *) = 0 ;
         virtual int output() = 0 ;
         virtual Gate *operator[](int) = 0 ;
+        bool isEnabled() {
+            return this->enable->output();
+        }
     protected :
         Gate *enable ;
 } ;
@@ -335,8 +338,8 @@ public :
 
         for (size_t i = 0; i < 5; ++i)
             dec2_4[i] = new Decoder2_4;
-
-        dec2_4[4]->setEnable(this->enable);
+        for (size_t i = 0; i < 4; ++i)
+            enables[i] = new AND; 
     }
    
     virtual void setEnable(bool val) {
@@ -381,18 +384,25 @@ public :
         return decToEnable * 4 + decToEnableOutput;
     }
 private :
-    Decoder2_4 *dec2_4[5] ;
+    Decoder2_4 *dec2_4[5];
+    Gate* enables[4];
 
     void _out() {
         size_t i = 0;
-        for (i = 0; i < 5; ++i)
-            (*dec2_4[i])[0];
+        int decToEnable = 0;
 
-        int decToEnable = dec2_4[4]->output();
+        dec2_4[4]->setEnable(this->enable);
+
+        for (i = 0; i < 4; ++i) 
+            if ((*dec2_4[4])[i]->output()) decToEnable = i;
 
         for (i = 0; i < 4; ++i) {
-            if (i == decToEnable) dec2_4[i]->setEnable(&t);
-            else dec2_4[i]->setEnable(&f);
+            enables[i]->input[0] = this->enable;
+            
+            if (i == decToEnable) enables[i]->input[1] = &t;
+            else enables[i]->input[1] = &f;
+
+            dec2_4[i]->setEnable(enables[i]);
         }
     }
 } ;
@@ -431,9 +441,9 @@ public:
     };
 
     friend std::ostream& operator<<(std::ostream& out, FourBitsRippleAdder f) {
-        out << f.fullAdder[0]->carryOut()->output() << " ";
+        out << f[0]->carryOut()->output() << " ";
         for (size_t i = 0; i < 4; ++i) 
-            out << f.fullAdder[i]->sum()->output() << " ";
+            out << f[i]->sum()->output() << " ";
         return out;
     }
 
@@ -442,16 +452,87 @@ private:
 
     void _out() {
         // The smaller digit's carryOut becomes the larger digit's carryIn
-        for (size_t i = 2; i >= 0; --i) {
+        for (int i = 2; i >= 0; i--) {
             fullAdder[i]->setValue(fullAdder[i+1]->carryOut(), 3 * i + 2);
         }
     }
 } ;
 
 class Decoder5_32 : public Decoder {
-    // Make the sum with a FourBitsRippleAdder
-    // Output the result with this Decoder5_32
-    // Convert it to decimal
+public:
+    Decoder5_32() : Decoder5_32(0) {};
+    Decoder5_32(bool val) {
+        this->setEnable(val);
+        
+        dec4_16[0] = new Decoder4_16;
+        dec4_16[1] = new Decoder4_16;
+        enables[0] = new AND;
+        enables[1] =  new AND;
+        switchDecoder = new NOT;
+    }
+
+    virtual void setEnable(bool val) override {
+        if (val) this->enable = &t;
+        else this->enable = &f;
+    }
+
+    virtual void setEnable(Gate* gate) override { this->enable = gate; }
+
+    virtual void setValue(bool val, int pin) override {
+        if (pin < 4) {
+            dec4_16[0]->setValue(val, pin);
+            dec4_16[1]->setValue(val, pin);
+        } else {
+            if (val) switchDecoder->input[0] = &t;
+            else switchDecoder->input[0] = &f;
+        }
+    }
+
+    virtual void setValue(Gate* gate, int pin) override {
+        if (pin < 4) {
+            dec4_16[0]->setValue(gate, pin);
+            dec4_16[1]->setValue(gate, pin);
+        } else
+            switchDecoder->input[0] = gate;
+    }
+
+    virtual Gate* operator[](int n) override {
+        _out();
+        // Access output gates from 0 to 31
+        if (n < 0 || n > 31) return nullptr;
+        return (*dec4_16[n / 16])[n % 16];
+    }
+
+    int output() override {
+        _out();
+        // Returns which gate is currently activated
+        return (dec4_16[0]->isEnabled()) ? dec4_16[0]->output() : dec4_16[1]->output() + 16;
+    }
+
+    friend std::ostream& operator<<( std::ostream& out, Decoder5_32 dec) {
+        for (int i = 31; i > 0; --i) {
+            out << dec[i]->output() << " ";          
+        }
+        out << dec[0]->output();
+        return out;
+    }
+
+private:
+    Decoder4_16* dec4_16[2];
+    Gate* enables[2];
+    Gate* switchDecoder;
+
+    void _out() {
+        enables[0]->input[0] = this->enable;
+        enables[1]->input[0] = this->enable;
+        enables[0]->setValue(switchDecoder->output(), 1);
+        enables[1]->setValue(switchDecoder->input[0], 1);
+        dec4_16[0]->setEnable(enables[0]);
+        dec4_16[1]->setEnable(enables[1]);
+
+        (*dec4_16[0])[0];
+        (*dec4_16[1])[0];
+    }
 } ;
 
 
@@ -459,18 +540,29 @@ class Decoder5_32 : public Decoder {
 int main() {
     FourBitsRippleAdder f;
 
-    // 0 0 0 1
-    // 1 0 0 0
-    f.setValue(false, 10);
-    f.setValue(true, 9);
-    f.setValue(false, 6);
-    f.setValue(false, 7);
-    f.setValue(false, 4);
-    f.setValue(false, 3);
-    f.setValue(true, 1);
-    f.setValue(false, 0);
+    bool bins[8];
+    for (size_t i = 0; i < 8; ++i)
+        std::cin >> bins[i];
 
-    std::cout << f << std::endl;
+    f.setValue(bins[0], 10);
+    f.setValue(bins[4], 9);
+    f.setValue(bins[1], 6);
+    f.setValue(bins[5], 7);
+    f.setValue(bins[2], 4);
+    f.setValue(bins[6], 3);
+    f.setValue(bins[3], 1);
+    f.setValue(bins[7], 0);
+
+    Decoder5_32 dec(true);
+
+    dec.setValue(f[0]->carryOut()->output(), 4);
+    dec.setValue(f[0]->sum()->output(), 3);
+    dec.setValue(f[1]->sum()->output(), 2);
+    dec.setValue(f[2]->sum()->output(), 1);
+    dec.setValue(f[3]->sum()->output(), 0);
+
+    std::cout << dec << std::endl;
+    std::cout << dec.output() << std::endl;
 
     return 0;
 }
