@@ -1,5 +1,13 @@
 #include <iostream>
+#include <cstdio>
+#include <string>
+#include <cstring>
+#include <vector>
 using namespace std;
+
+#define SIZE 1000
+char *convertToDifferentBase(int dec, int base, char *result);
+std::vector<string> getBins();
 
 class Gate
 {
@@ -414,16 +422,42 @@ public:
     FourBitsRippleAdder() {
         for (size_t i = 0; i < 4; ++i)
             fullAdder[i] = new OneBitFullAdder;
-        setValue(false, 11);
+        setValue(false, 8);
     }
 
     virtual void setValue(bool val, int pin) {
         // Has 12 pins from top to bottom
-        fullAdder[pin / 3]->setValue(val, pin % 3);
+        // fullAdder[pin / 3]->setValue(val, pin % 3);
+
+        switch (pin)
+        {
+            case 0: fullAdder[0]->setValue(val, 0); break;
+            case 1: fullAdder[0]->setValue(val, 1); break;
+            case 2: fullAdder[1]->setValue(val, 0); break;
+            case 3: fullAdder[1]->setValue(val, 1); break;
+            case 4: fullAdder[2]->setValue(val, 0); break;
+            case 5: fullAdder[2]->setValue(val, 1); break;
+            case 6: fullAdder[3]->setValue(val, 0); break;
+            case 7: fullAdder[3]->setValue(val, 1); break;
+            case 8: fullAdder[3]->setValue(val, 2); break;
+            default: break;
+        }
     }
 
     virtual void setValue(Gate* gate, int pin) {
-        fullAdder[pin / 3]->setValue(gate, pin % 3);
+        switch (pin)
+        {
+            case 0: fullAdder[0]->setValue(gate, 0); break;
+            case 1: fullAdder[0]->setValue(gate, 1); break;
+            case 2: fullAdder[1]->setValue(gate, 0); break;
+            case 3: fullAdder[1]->setValue(gate, 1); break;
+            case 4: fullAdder[2]->setValue(gate, 0); break;
+            case 5: fullAdder[2]->setValue(gate, 1); break;
+            case 6: fullAdder[3]->setValue(gate, 0); break;
+            case 7: fullAdder[3]->setValue(gate, 1); break;
+            case 8: fullAdder[3]->setValue(gate, 2); break;
+            default: break;
+        }
     }
 
     virtual Adder* operator[](int n) {
@@ -453,7 +487,7 @@ private:
     void _out() {
         // The smaller digit's carryOut becomes the larger digit's carryIn
         for (int i = 2; i >= 0; i--) {
-            fullAdder[i]->setValue(fullAdder[i+1]->carryOut(), 3 * i + 2);
+            fullAdder[i]->setValue(fullAdder[i+1]->carryOut(), 2);
         }
     }
 } ;
@@ -535,23 +569,25 @@ private:
     }
 } ;
 
-
+void test();
 
 int main() {
     FourBitsRippleAdder f;
 
-    bool bins[8];
-    for (size_t i = 0; i < 8; ++i)
-        std::cin >> bins[i];
+    bool a[4], b[4];
+    for (size_t i = 0; i < 4; ++i)
+        std::cin >> a[i];
+    for (size_t i = 0; i < 4; ++i)
+        std::cin >> b[i];
 
-    f.setValue(bins[0], 10);
-    f.setValue(bins[4], 9);
-    f.setValue(bins[1], 6);
-    f.setValue(bins[5], 7);
-    f.setValue(bins[2], 4);
-    f.setValue(bins[6], 3);
-    f.setValue(bins[3], 1);
-    f.setValue(bins[7], 0);
+    f.setValue(a[0], 0);
+    f.setValue(b[0], 1);
+    f.setValue(a[1], 2);
+    f.setValue(b[1], 3);
+    f.setValue(a[2], 4);
+    f.setValue(b[2], 5);
+    f.setValue(a[3], 6);
+    f.setValue(b[3], 7);
 
     Decoder5_32 dec(true);
 
@@ -564,5 +600,96 @@ int main() {
     std::cout << dec << std::endl;
     std::cout << dec.output() << std::endl;
 
+    // test();
+
     return 0;
+}
+
+void test() {
+    FourBitsRippleAdder f;
+    Decoder5_32 dec(true);
+    std::vector<string> l = getBins();
+
+    for(const string& a: l) {
+        for( const string& b: l) {
+            std::cout << a << "\n" << b << std::endl;
+
+            f.setValue(bool(char(a[0]) - 48), 0);
+            f.setValue(bool(char(b[0]) - 48), 1);
+            f.setValue(bool(char(a[1]) - 48), 2);
+            f.setValue(bool(char(b[1]) - 48), 3);
+            f.setValue(bool(char(a[2]) - 48), 4);
+            f.setValue(bool(char(b[2]) - 48), 5);
+            f.setValue(bool(char(a[3]) - 48), 6);
+            f.setValue(bool(char(b[3]) - 48), 7);
+
+            dec.setValue(f[0]->carryOut()->output(), 4);
+            dec.setValue(f[0]->sum()->output(), 3);
+            dec.setValue(f[1]->sum()->output(), 2);
+            dec.setValue(f[2]->sum()->output(), 1);
+            dec.setValue(f[3]->sum()->output(), 0);
+
+            std::cout << dec << std::endl;
+            std::cout << dec.output() << std::endl;
+        }
+    }
+}
+
+char *convertToDifferentBase(int dec, int base, char *result) 
+{
+    if (!(dec / base))
+    {
+        if (dec < 0)
+        {
+            result[0] = '-';
+            result[1] = (abs(dec % base) > 9) ? abs(dec % base) + '7': abs(dec % base) + '0';
+            result[2] = '\0';
+        }
+        else
+        {
+            result[0] = (abs(dec % base) > 9) ? abs(dec % base) + '7': abs(dec % base) + '0';
+            result[1] = '\0';
+        }
+        
+        return result; 
+    }    
+    
+    convertToDifferentBase(dec / base, base, result);
+    int digit = (abs(dec % base) > 9) ? abs(dec % base) + '7': abs(dec % base) + '0';
+    int i = 0;
+    for (i = 0; result[i] != '\0'; i++);
+    result[i] = digit;
+    result[i+1] = '\0';
+    return result;
+}
+
+std::vector<string> getBins() {
+    // Generate the 32 4 bits binary numbers
+    int i, j;
+    char result[5];
+    string temp;
+    std::vector<string> l;
+
+    for( i = 0; i < 16; ++i)
+    {
+        temp = "";
+        convertToDifferentBase(i, 2, result);
+        for( j = 0; j < strlen(result); ++j) {
+            temp += result[j];
+        }
+
+        while(j < 4) {
+            temp = "0" + temp;
+            ++j;
+        }
+
+        l.push_back(temp);
+    }
+
+    // for(i = 0; i < l.size(); ++i) {
+    //     std::cout << l[i] << std::endl;
+    //     for(j = 0; j < l[i].size(); ++j)
+    //         std::cout << bool(char(l[i][j]) - 48) << " ";
+    // }
+    return l;
 }
