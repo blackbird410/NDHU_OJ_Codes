@@ -5,10 +5,6 @@
 #include <vector>
 using namespace std;
 
-#define SIZE 1000
-char *convertToDifferentBase(int dec, int base, char *result);
-std::vector<string> getBins();
-
 class Gate
 {
     public :
@@ -244,20 +240,96 @@ private:
     Gate *carry;
 };
 
+class FourBitsRippleAdder : public Adder
+{
+public:
+    FourBitsRippleAdder() {
+        for (size_t i = 0; i < 4; ++i)
+            fullAdder[i] = new OneBitFullAdder;
+        setValue(false, 8);
+    }
+
+    virtual void setValue(bool val, int pin) {
+        // Has 12 pins from top to bottom
+        // fullAdder[pin / 3]->setValue(val, pin % 3);
+
+        switch (pin)
+        {
+            case 0: fullAdder[0]->setValue(val, 0); break;
+            case 1: fullAdder[0]->setValue(val, 1); break;
+            case 2: fullAdder[1]->setValue(val, 0); break;
+            case 3: fullAdder[1]->setValue(val, 1); break;
+            case 4: fullAdder[2]->setValue(val, 0); break;
+            case 5: fullAdder[2]->setValue(val, 1); break;
+            case 6: fullAdder[3]->setValue(val, 0); break;
+            case 7: fullAdder[3]->setValue(val, 1); break;
+            case 8: fullAdder[3]->setValue(val, 2); break;
+            default: break;
+        }
+    }
+
+    virtual void setValue(Gate* gate, int pin) {
+        switch (pin)
+        {
+            case 0: fullAdder[0]->setValue(gate, 0); break;
+            case 1: fullAdder[0]->setValue(gate, 1); break;
+            case 2: fullAdder[1]->setValue(gate, 0); break;
+            case 3: fullAdder[1]->setValue(gate, 1); break;
+            case 4: fullAdder[2]->setValue(gate, 0); break;
+            case 5: fullAdder[2]->setValue(gate, 1); break;
+            case 6: fullAdder[3]->setValue(gate, 0); break;
+            case 7: fullAdder[3]->setValue(gate, 1); break;
+            case 8: fullAdder[3]->setValue(gate, 2); break;
+            default: break;
+        }
+    }
+
+    virtual Adder* operator[](int n) {
+        _out();
+        if (n < 0 || n > 3) return nullptr;
+        return fullAdder[n];
+    }
+
+    virtual Gate* sum() override {
+        return fullAdder[0]->sum();
+    };
+
+    virtual Gate* carryOut() override {
+        return fullAdder[0]->carryOut();
+    };
+
+    friend std::ostream& operator<<(std::ostream& out, FourBitsRippleAdder f) {
+        out << f[0]->carryOut()->output() << " ";
+        for (size_t i = 0; i < 4; ++i) 
+            out << f[i]->sum()->output() << " ";
+        return out;
+    }
+
+private:
+    OneBitFullAdder* fullAdder[4];
+
+    void _out() {
+        // The smaller digit's carryOut becomes the larger digit's carryIn
+        for (int i = 2; i >= 0; i--) {
+            fullAdder[i]->setValue(fullAdder[i+1]->carryOut(), 2);
+        }
+    }
+} ;
+
 class Decoder
 {
-    public :
-        virtual void setValue(bool, int) = 0 ;
-        virtual void setValue(Gate *, int) = 0 ;
-        virtual void setEnable(bool) = 0 ;
-        virtual void setEnable(Gate *) = 0 ;
-        virtual int output() = 0 ;
-        virtual Gate *operator[](int) = 0 ;
-        bool isEnabled() {
-            return this->enable->output();
-        }
-    protected :
-        Gate *enable ;
+public :
+    virtual void setValue(bool, int) = 0 ;
+    virtual void setValue(Gate *, int) = 0 ;
+    virtual void setEnable(bool) = 0 ;
+    virtual void setEnable(Gate *) = 0 ;
+    virtual int output() = 0 ;
+    virtual Gate *operator[](int) = 0 ;
+    bool isEnabled() {
+        return this->enable->output();
+    }
+protected :
+    Gate *enable ;
 } ;
 
 class Decoder2_4 : public Decoder
@@ -335,6 +407,83 @@ class Decoder2_4 : public Decoder
                 enables[i] -> input[1] = component[i + 2] ;
             }
         }
+} ;
+
+
+class Decoder3_8 : public Decoder
+{
+public :
+    Decoder3_8() : Decoder3_8(0) {}
+    Decoder3_8(bool val) {
+        this->setEnable(val);
+
+        dec2_4[0] = new Decoder2_4;
+        dec2_4[1] = new Decoder2_4;
+        inverter = new NOT;
+
+        dec2_4[0]->setEnable(this->enable);
+        dec2_4[1]->setEnable(this->enable);
+    }
+    virtual void setEnable(bool val) override {
+        if(val) this -> enable = &t ;
+        else this -> enable = &f ;
+    }
+
+    virtual void setEnable(Gate *gate) override { this -> enable = gate ; }
+    virtual void setValue(Gate *gate, int pin) override { 
+        if (pin) {
+            dec2_4[0]->setValue(gate, pin);
+            dec2_4[1]->setValue(gate, pin);
+        } else 
+            inverter->input[0] = gate;
+    }
+    virtual void setValue(bool val, int pin) override {
+        if (pin) {
+            dec2_4[0]->setValue(val, pin);
+            dec2_4[1]->setValue(val, pin);
+        } else {
+            if (val) inverter->input[0] = &t;
+            else inverter->input[0] = &f;
+        }
+    }
+    virtual Gate *operator[](int n) override {
+        _out() ;
+        switch (n) {
+            case 0: return (*dec2_4[0])[0];
+            case 1: return (*dec2_4[0])[1];
+            case 2: return (*dec2_4[0])[2];
+            case 3: return (*dec2_4[0])[3];
+            case 4: return (*dec2_4[1])[0];
+            case 5: return (*dec2_4[1])[1];
+            case 6: return (*dec2_4[1])[2];
+            case 7: return (*dec2_4[1])[3];
+            default: return nullptr;
+        }
+    }
+    friend ostream &operator<<(ostream &out, Decoder3_8 dec)
+    {
+        for(int i = 7 ; i >= 0 ; i--)
+            out << dec[i] -> output() << " " ;
+        return out ;
+    }
+    
+    virtual int output() override {
+        _out();
+        return (inverter->output()) ? dec2_4[0]->output() : dec2_4[1]->output() + 4; 
+    }
+private :
+    Decoder* dec2_4[2];
+    Gate* inverter;
+
+    void _out() {
+        if (inverter->output()) {
+            dec2_4[0]->setEnable(&t);
+            dec2_4[1]->setEnable(&f);
+        } else {
+            dec2_4[0]->setEnable(&f);
+            dec2_4[1]->setEnable(&t);
+        }
+    }
 } ;
 
 class Decoder4_16 : public Decoder
@@ -415,82 +564,82 @@ private :
     }
 } ;
 
-
-class FourBitsRippleAdder : public Adder
-{
-public:
-    FourBitsRippleAdder() {
-        for (size_t i = 0; i < 4; ++i)
-            fullAdder[i] = new OneBitFullAdder;
-        setValue(false, 8);
-    }
-
-    virtual void setValue(bool val, int pin) {
-        // Has 12 pins from top to bottom
-        // fullAdder[pin / 3]->setValue(val, pin % 3);
-
-        switch (pin)
-        {
-            case 0: fullAdder[0]->setValue(val, 0); break;
-            case 1: fullAdder[0]->setValue(val, 1); break;
-            case 2: fullAdder[1]->setValue(val, 0); break;
-            case 3: fullAdder[1]->setValue(val, 1); break;
-            case 4: fullAdder[2]->setValue(val, 0); break;
-            case 5: fullAdder[2]->setValue(val, 1); break;
-            case 6: fullAdder[3]->setValue(val, 0); break;
-            case 7: fullAdder[3]->setValue(val, 1); break;
-            case 8: fullAdder[3]->setValue(val, 2); break;
-            default: break;
-        }
-    }
-
-    virtual void setValue(Gate* gate, int pin) {
-        switch (pin)
-        {
-            case 0: fullAdder[0]->setValue(gate, 0); break;
-            case 1: fullAdder[0]->setValue(gate, 1); break;
-            case 2: fullAdder[1]->setValue(gate, 0); break;
-            case 3: fullAdder[1]->setValue(gate, 1); break;
-            case 4: fullAdder[2]->setValue(gate, 0); break;
-            case 5: fullAdder[2]->setValue(gate, 1); break;
-            case 6: fullAdder[3]->setValue(gate, 0); break;
-            case 7: fullAdder[3]->setValue(gate, 1); break;
-            case 8: fullAdder[3]->setValue(gate, 2); break;
-            default: break;
-        }
-    }
-
-    virtual Adder* operator[](int n) {
-        _out();
-        if (n < 0 || n > 3) return nullptr;
-        return fullAdder[n];
-    }
-
-    virtual Gate* sum() override {
-        return fullAdder[0]->sum();
-    };
-
-    virtual Gate* carryOut() override {
-        return fullAdder[0]->carryOut();
-    };
-
-    friend std::ostream& operator<<(std::ostream& out, FourBitsRippleAdder f) {
-        out << f[0]->carryOut()->output() << " ";
-        for (size_t i = 0; i < 4; ++i) 
-            out << f[i]->sum()->output() << " ";
-        return out;
-    }
-
-private:
-    OneBitFullAdder* fullAdder[4];
-
-    void _out() {
-        // The smaller digit's carryOut becomes the larger digit's carryIn
-        for (int i = 2; i >= 0; i--) {
-            fullAdder[i]->setValue(fullAdder[i+1]->carryOut(), 2);
-        }
-    }
-} ;
+// class Decoder5_32 : public Decoder {
+// public:
+//     Decoder5_32() : Decoder5_32(0) {};
+//     Decoder5_32(bool val) {
+//         this->setEnable(val);
+//         
+//         dec4_16[0] = new Decoder4_16;
+//         dec4_16[1] = new Decoder4_16;
+//         enables[0] = new AND;
+//         enables[1] =  new AND;
+//         switchDecoder = new NOT;
+//     }
+//
+//     virtual void setEnable(bool val) override {
+//         if (val) this->enable = &t;
+//         else this->enable = &f;
+//     }
+//
+//     virtual void setEnable(Gate* gate) override { this->enable = gate; }
+//
+//     virtual void setValue(bool val, int pin) override {
+//         if (pin < 4) {
+//             dec4_16[0]->setValue(val, pin);
+//             dec4_16[1]->setValue(val, pin);
+//         } else {
+//             if (val) switchDecoder->input[0] = &t;
+//             else switchDecoder->input[0] = &f;
+//         }
+//     }
+//
+//     virtual void setValue(Gate* gate, int pin) override {
+//         if (pin < 4) {
+//             dec4_16[0]->setValue(gate, pin);
+//             dec4_16[1]->setValue(gate, pin);
+//         } else
+//             switchDecoder->input[0] = gate;
+//     }
+//
+//     virtual Gate* operator[](int n) override {
+//         _out();
+//         // Access output gates from 0 to 31
+//         if (n < 0 || n > 31) return nullptr;
+//         return (*dec4_16[n / 16])[n % 16];
+//     }
+//
+//     int output() override {
+//         _out();
+//         // Returns which gate is currently activated
+//         return (dec4_16[0]->isEnabled()) ? dec4_16[0]->output() : dec4_16[1]->output() + 16;
+//     }
+//
+//     friend std::ostream& operator<<( std::ostream& out, Decoder5_32 dec) {
+//         for (int i = 31; i > 0; --i) {
+//             out << dec[i]->output() << " ";          
+//         }
+//         out << dec[0]->output();
+//         return out;
+//     }
+//
+// private:
+//     Decoder4_16* dec4_16[2];
+//     Gate* enables[2];
+//     Gate* switchDecoder;
+//
+//     void _out() {
+//         enables[0]->input[0] = this->enable;
+//         enables[1]->input[0] = this->enable;
+//         enables[0]->setValue(switchDecoder->output(), 1);
+//         enables[1]->setValue(switchDecoder->input[0], 1);
+//         dec4_16[0]->setEnable(enables[0]);
+//         dec4_16[1]->setEnable(enables[1]);
+//
+//         (*dec4_16[0])[0];
+//         (*dec4_16[1])[0];
+//     }
+// } ;
 
 class Decoder5_32 : public Decoder {
 public:
@@ -498,51 +647,42 @@ public:
     Decoder5_32(bool val) {
         this->setEnable(val);
         
-        dec4_16[0] = new Decoder4_16;
-        dec4_16[1] = new Decoder4_16;
-        enables[0] = new AND;
-        enables[1] =  new AND;
-        switchDecoder = new NOT;
-    }
+        dec2_4 = new Decoder2_4;
+        for(int i = 0; i < 4; ++i)
+            dec3_8[i] = new Decoder3_8;
+    };
+
+    virtual void setValue(bool val, int pin) override {
+        if (pin < 3) 
+            for (int i = 0; i < 4; ++i) 
+                dec3_8[i]->setValue(val, pin);
+        else 
+            dec2_4->setValue(val, pin % 3);
+    };
+
+    virtual void setValue(Gate* gate, int pin) override {
+        if (pin < 3) 
+            for (int i = 0; i < 4; ++i) 
+                dec3_8[i]->setValue(gate, pin);
+        else 
+            dec2_4->setValue(gate, pin % 3);
+    };
 
     virtual void setEnable(bool val) override {
         if (val) this->enable = &t;
-        else this->enable = &f;
-    }
+        else this->enable = &f; 
+    };
 
-    virtual void setEnable(Gate* gate) override { this->enable = gate; }
-
-    virtual void setValue(bool val, int pin) override {
-        if (pin < 4) {
-            dec4_16[0]->setValue(val, pin);
-            dec4_16[1]->setValue(val, pin);
-        } else {
-            if (val) switchDecoder->input[0] = &t;
-            else switchDecoder->input[0] = &f;
-        }
-    }
-
-    virtual void setValue(Gate* gate, int pin) override {
-        if (pin < 4) {
-            dec4_16[0]->setValue(gate, pin);
-            dec4_16[1]->setValue(gate, pin);
-        } else
-            switchDecoder->input[0] = gate;
-    }
-
-    virtual Gate* operator[](int n) override {
+    virtual void setEnable(Gate* gate) override { this->enable = gate; };
+    virtual int output() override {
         _out();
-        // Access output gates from 0 to 31
-        if (n < 0 || n > 31) return nullptr;
-        return (*dec4_16[n / 16])[n % 16];
-    }
-
-    int output() override {
+        int decToEnable = dec2_4->output();
+        return dec3_8[decToEnable]->output() + decToEnable * 8;
+    };
+    virtual Gate *operator[](int n) override {
         _out();
-        // Returns which gate is currently activated
-        return (dec4_16[0]->isEnabled()) ? dec4_16[0]->output() : dec4_16[1]->output() + 16;
-    }
-
+        return (*dec3_8[n / 8])[n % 8];
+    };
     friend std::ostream& operator<<( std::ostream& out, Decoder5_32 dec) {
         for (int i = 31; i > 0; --i) {
             out << dec[i]->output() << " ";          
@@ -550,26 +690,21 @@ public:
         out << dec[0]->output();
         return out;
     }
-
 private:
-    Decoder4_16* dec4_16[2];
-    Gate* enables[2];
-    Gate* switchDecoder;
+    Decoder2_4* dec2_4;
+    Decoder3_8* dec3_8[4];
 
     void _out() {
-        enables[0]->input[0] = this->enable;
-        enables[1]->input[0] = this->enable;
-        enables[0]->setValue(switchDecoder->output(), 1);
-        enables[1]->setValue(switchDecoder->input[0], 1);
-        dec4_16[0]->setEnable(enables[0]);
-        dec4_16[1]->setEnable(enables[1]);
-
-        (*dec4_16[0])[0];
-        (*dec4_16[1])[0];
+        dec2_4->setEnable(this->enable);
+        (*dec2_4)[0];
+        int decToEnable = dec2_4->output();
+        int i = 0;
+        for (i = 0; i < 4; ++i) {
+            if (i == decToEnable && this->isEnabled()) dec3_8[i]->setEnable(&t);
+            else dec3_8[i]->setEnable(&f);
+        }
     }
-} ;
-
-void test();
+};
 
 int main() {
     FourBitsRippleAdder f;
@@ -600,96 +735,6 @@ int main() {
     std::cout << dec << std::endl;
     std::cout << dec.output() << std::endl;
 
-    // test();
-
     return 0;
 }
 
-void test() {
-    FourBitsRippleAdder f;
-    Decoder5_32 dec(true);
-    std::vector<string> l = getBins();
-
-    for(const string& a: l) {
-        for( const string& b: l) {
-            std::cout << a << "\n" << b << std::endl;
-
-            f.setValue(bool(char(a[0]) - 48), 0);
-            f.setValue(bool(char(b[0]) - 48), 1);
-            f.setValue(bool(char(a[1]) - 48), 2);
-            f.setValue(bool(char(b[1]) - 48), 3);
-            f.setValue(bool(char(a[2]) - 48), 4);
-            f.setValue(bool(char(b[2]) - 48), 5);
-            f.setValue(bool(char(a[3]) - 48), 6);
-            f.setValue(bool(char(b[3]) - 48), 7);
-
-            dec.setValue(f[0]->carryOut()->output(), 4);
-            dec.setValue(f[0]->sum()->output(), 3);
-            dec.setValue(f[1]->sum()->output(), 2);
-            dec.setValue(f[2]->sum()->output(), 1);
-            dec.setValue(f[3]->sum()->output(), 0);
-
-            std::cout << dec << std::endl;
-            std::cout << dec.output() << std::endl;
-        }
-    }
-}
-
-char *convertToDifferentBase(int dec, int base, char *result) 
-{
-    if (!(dec / base))
-    {
-        if (dec < 0)
-        {
-            result[0] = '-';
-            result[1] = (abs(dec % base) > 9) ? abs(dec % base) + '7': abs(dec % base) + '0';
-            result[2] = '\0';
-        }
-        else
-        {
-            result[0] = (abs(dec % base) > 9) ? abs(dec % base) + '7': abs(dec % base) + '0';
-            result[1] = '\0';
-        }
-        
-        return result; 
-    }    
-    
-    convertToDifferentBase(dec / base, base, result);
-    int digit = (abs(dec % base) > 9) ? abs(dec % base) + '7': abs(dec % base) + '0';
-    int i = 0;
-    for (i = 0; result[i] != '\0'; i++);
-    result[i] = digit;
-    result[i+1] = '\0';
-    return result;
-}
-
-std::vector<string> getBins() {
-    // Generate the 32 4 bits binary numbers
-    int i, j;
-    char result[5];
-    string temp;
-    std::vector<string> l;
-
-    for( i = 0; i < 16; ++i)
-    {
-        temp = "";
-        convertToDifferentBase(i, 2, result);
-        for( j = 0; j < strlen(result); ++j) {
-            temp += result[j];
-        }
-
-        while(j < 4) {
-            temp = "0" + temp;
-            ++j;
-        }
-
-        l.push_back(temp);
-    }
-
-    // for(i = 0; i < l.size(); ++i) {
-    //     std::cout << l[i] << std::endl;
-    //     for(j = 0; j < l[i].size(); ++j)
-    //         std::cout << bool(char(l[i][j]) - 48) << " ";
-    // }
-    return l;
-}
