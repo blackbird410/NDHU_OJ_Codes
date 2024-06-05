@@ -28,12 +28,20 @@ public:
 
     void sweepField(int* nCase) {
         ++(*nCase);
+        if (*nCase > 1) {
+            std::cout << std::endl;
+        }
         std::cout << "Field #" << *nCase << ":" << std::endl;
-        size_t i, j;
-        for(i = 0; i < row; ++i, std::cout << std::endl)
-            for (j = 0; j < col; ++j)
-                if (field[i][j] != MINE) std::cout << lookAround(i, j);
-                else std::cout << MINE;
+        for (size_t i = 0; i < row; ++i) {
+            for (size_t j = 0; j < col; ++j) {
+                if (field[i][j] != MINE) {
+                    std::cout << lookAround(i, j);
+                } else {
+                    std::cout << MINE;
+                }
+            }
+            std::cout << std::endl;
+        }
     }
 
     int lookAround(int y,  int x) {
